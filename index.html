@@ -320,6 +320,7 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
       <input class="tin" id="login-user" placeholder="Usuário" autocomplete="username">
       <input class="tin" id="login-pass" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
+    <div id="login-default-hint" style="font-size:10px;color:var(--t3);background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:6px 9px;margin-top:8px;line-height:1.5"></div>
     <div class="modal-result" id="login-result"></div>
     <div class="modal-foot">
       <span class="modal-hint"></span>
@@ -885,6 +886,10 @@ function openLogin(){
   document.getElementById('login-pass').value='';
   document.getElementById('login-result').className='modal-result';
   document.getElementById('login-result').textContent='';
+  const hint=document.getElementById('login-default-hint');
+  const stillDefault = getUsers().some(u=>u.username==='admin' && u.password==='admin123');
+  hint.textContent = stillDefault ? 'Primeiro acesso: usuário admin, senha admin123. Depois de entrar, troque a senha no painel de Administração.' : '';
+  hint.style.display = stillDefault ? 'block' : 'none';
   document.getElementById('login-overlay').classList.add('on');
   document.getElementById('login-user').focus();
 }
