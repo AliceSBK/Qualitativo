@@ -275,12 +275,22 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
       Estratégico >200k
       <span class="ni-b nb-r" id="nb-et">0</span>
     </div>
+
+    <div class="sb-sec">Administração</div>
+    <div class="ni" onclick="openAdmin(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Administração
+    </div>
   </nav>
 
   <div class="sb-ft">
     <div class="sf">Processos <b class="g" id="sf-tot">—</b></div>
     <div class="sf">Total pendências <b class="r" id="sf-err">—</b></div>
     <div class="sf">Marcados corrigidos <b class="g" id="sf-corr">0</b></div>
+    <div id="sf-auth" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--t2)">
+      <span id="sf-auth-label">Visitante</span>
+      <a href="javascript:void(0)" id="sf-auth-action" onclick="openLogin()" style="color:var(--blue);font-weight:600;text-decoration:none">Entrar</a>
+    </div>
   </div>
 </aside>
 
@@ -296,6 +306,52 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
       <div class="modal-btns">
         <button class="btn" onclick="closeModal()">Cancelar</button>
         <button class="btn hi" onclick="applyBulk()">Marcar corrigidos</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="login-overlay" onclick="if(event.target===this)closeLogin()">
+  <div class="modal" style="width:340px">
+    <h3>Entrar</h3>
+    <p>Informe seu usuário e senha para acessar áreas restritas.</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input class="tin" id="login-user" placeholder="Usuário" autocomplete="username">
+      <input class="tin" id="login-pass" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="modal-result" id="login-result"></div>
+    <div class="modal-foot">
+      <span class="modal-hint"></span>
+      <div class="modal-btns">
+        <button class="btn" onclick="closeLogin()">Cancelar</button>
+        <button class="btn hi" onclick="doLogin()">Entrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USER FORM MODAL -->
+<div class="modal-overlay" id="userform-overlay" onclick="if(event.target===this)closeUserForm()">
+  <div class="modal" style="width:460px">
+    <h3 id="userform-title">Novo usuário</h3>
+    <p>Defina o usuário, a senha e o que essa pessoa pode acessar.</p>
+    <input type="hidden" id="uf-id">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input class="tin" id="uf-user" placeholder="Nome de usuário">
+      <input class="tin" id="uf-pass" placeholder="Senha">
+      <select class="tsel" id="uf-role" onchange="toggleUfViews()" style="width:100%">
+        <option value="admin">Administrador (acesso total)</option>
+        <option value="usuario">Usuário comum (visão limitada)</option>
+      </select>
+      <div id="uf-views" style="display:flex;flex-wrap:wrap;gap:7px 12px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:10px"></div>
+    </div>
+    <div class="modal-result" id="userform-result"></div>
+    <div class="modal-foot">
+      <span class="modal-hint"></span>
+      <div class="modal-btns">
+        <button class="btn" onclick="closeUserForm()">Cancelar</button>
+        <button class="btn hi" onclick="saveUser()">Salvar</button>
       </div>
     </div>
   </div>
@@ -758,6 +814,32 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
     </div>
   </div>
 
+  <!-- ══ ADMINISTRAÇÃO ══ -->
+  <div class="panel" id="p-admin">
+    <div class="sh">
+      <h2>Administração — Usuários e Acesso</h2>
+      <div class="sh-r">
+        <button class="btn hi" onclick="openUserForm(null)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo usuário
+        </button>
+      </div>
+    </div>
+    <div style="background:var(--yel2);border:1px solid rgba(227,179,65,.25);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--yellow);margin-bottom:11px;line-height:1.5">
+      Este controle de acesso roda inteiramente no navegador, sem servidor. É útil para organizar quem enxerga o quê, mas não deve ser tratado como proteção real contra alguém com conhecimento técnico que inspecione o código da página.
+    </div>
+    <div class="tw">
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Usuário</th><th>Papel</th><th>Visões liberadas</th><th>Ações</th>
+          </tr></thead>
+          <tbody id="admin-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   </div>
 </main>
 
@@ -776,6 +858,178 @@ const norm = p => String(p).trim().replace(/\s/g,'');
 function init(){
   document.getElementById('tb-dt').textContent = new Date().toLocaleDateString('pt-BR');
   render(D);
+  refreshAuthUI();
+}
+
+// ── AUTH / USUÁRIOS ────────────────────────────
+// Controle de acesso simples, roda só no navegador (sem servidor/backend).
+// Serve para organizar quem enxerga o quê, não é proteção real: os dados
+// de usuário/senha ficam salvos no localStorage do próprio navegador.
+let pendingAdminOpen = false;
+const viewKeys = () => Object.keys(PG_NAMES).filter(k=>k!=='admin');
+
+function getUsers(){
+  let u = JSON.parse(localStorage.getItem('qc_users')||'null');
+  if(!u || !u.length){
+    u = [{id:1, username:'admin', password:'admin123', role:'admin', views:[]}];
+    localStorage.setItem('qc_users', JSON.stringify(u));
+  }
+  return u;
+}
+function saveUsers(list){ localStorage.setItem('qc_users', JSON.stringify(list)); }
+function getSession(){ return JSON.parse(sessionStorage.getItem('qc_session')||'null'); }
+function setSession(s){ if(s) sessionStorage.setItem('qc_session', JSON.stringify(s)); else sessionStorage.removeItem('qc_session'); }
+
+function openLogin(){
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-result').className='modal-result';
+  document.getElementById('login-result').textContent='';
+  document.getElementById('login-overlay').classList.add('on');
+  document.getElementById('login-user').focus();
+}
+function closeLogin(){
+  document.getElementById('login-overlay').classList.remove('on');
+  pendingAdminOpen=false;
+}
+function doLogin(){
+  const user=document.getElementById('login-user').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const found=getUsers().find(u=>u.username===user && u.password===pass);
+  const res=document.getElementById('login-result');
+  if(!found){ res.className='modal-result err'; res.textContent='Usuário ou senha inválidos.'; return; }
+  setSession({username:found.username, role:found.role, views:found.views||[]});
+  document.getElementById('login-overlay').classList.remove('on');
+  refreshAuthUI();
+  if(pendingAdminOpen){
+    pendingAdminOpen=false;
+    if(found.role==='admin'){ renderAdminUsers(); go('admin'); }
+    else alert('Este usuário não tem permissão de administrador.');
+  }
+}
+function doLogout(){
+  setSession(null);
+  refreshAuthUI();
+  if(CUR==='admin') go('overview');
+}
+
+function refreshAuthUI(){
+  const s=getSession();
+  const label=document.getElementById('sf-auth-label');
+  const action=document.getElementById('sf-auth-action');
+  if(s){
+    label.textContent = s.username+' · '+(s.role==='admin'?'Admin':'Usuário');
+    action.textContent='Sair';
+    action.onclick=doLogout;
+  } else {
+    label.textContent='Visitante';
+    action.textContent='Entrar';
+    action.onclick=openLogin;
+  }
+  applyViewRestrictions(s);
+}
+
+function applyViewRestrictions(s){
+  const restricted = !!s && s.role==='usuario';
+  document.querySelectorAll('.ni').forEach(ni=>{
+    const m=(ni.getAttribute('onclick')||'').match(/^go\('([^']+)'/);
+    if(!m) return;
+    const id=m[1];
+    const allowed = !restricted || id==='overview' || (s.views||[]).includes(id);
+    ni.style.display = allowed ? '' : 'none';
+  });
+  if(restricted && CUR!=='overview' && !(s.views||[]).includes(CUR)) go('overview');
+}
+
+function openAdmin(el){
+  const s=getSession();
+  if(s && s.role==='admin'){ renderAdminUsers(); go('admin', el); return; }
+  pendingAdminOpen=true;
+  openLogin();
+}
+
+function renderAdminUsers(){
+  const tbody=document.getElementById('admin-body');
+  const users=getUsers();
+  tbody.innerHTML = users.map(u=>{
+    const viewsLabel = u.role==='admin' ? 'Acesso total' : ((u.views&&u.views.length) ? u.views.map(v=>PG_NAMES[v]||v).join(', ') : 'Nenhuma view liberada');
+    return `<tr>
+      <td>${u.username}</td>
+      <td><span class="cpill ${u.role==='admin'?'p-b':'p-d'}">${u.role==='admin'?'Administrador':'Usuário comum'}</span></td>
+      <td style="color:var(--t2);font-size:11px">${viewsLabel}</td>
+      <td>
+        <button class="btn" style="padding:2px 8px;font-size:10px" onclick="openUserForm(${u.id})">Editar</button>
+        <button class="btn" style="padding:2px 8px;font-size:10px" onclick="deleteUser(${u.id})">Excluir</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleUfViews(){
+  document.getElementById('uf-views').style.display = document.getElementById('uf-role').value==='usuario' ? 'flex' : 'none';
+}
+
+function openUserForm(id){
+  const res=document.getElementById('userform-result');
+  res.className='modal-result'; res.textContent='';
+  const views=document.getElementById('uf-views');
+  views.innerHTML = viewKeys().map(k=>`<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)"><input type="checkbox" class="uf-view-cb" value="${k}"> ${PG_NAMES[k]}</label>`).join('');
+  if(id){
+    const u=getUsers().find(x=>x.id===id);
+    document.getElementById('userform-title').textContent='Editar usuário';
+    document.getElementById('uf-id').value=u.id;
+    document.getElementById('uf-user').value=u.username;
+    document.getElementById('uf-pass').value=u.password;
+    document.getElementById('uf-role').value=u.role;
+    (u.views||[]).forEach(v=>{ const cb=views.querySelector(`.uf-view-cb[value="${v}"]`); if(cb) cb.checked=true; });
+  } else {
+    document.getElementById('userform-title').textContent='Novo usuário';
+    document.getElementById('uf-id').value='';
+    document.getElementById('uf-user').value='';
+    document.getElementById('uf-pass').value='';
+    document.getElementById('uf-role').value='usuario';
+  }
+  toggleUfViews();
+  document.getElementById('userform-overlay').classList.add('on');
+}
+function closeUserForm(){ document.getElementById('userform-overlay').classList.remove('on'); }
+
+function saveUser(){
+  const id=document.getElementById('uf-id').value;
+  const username=document.getElementById('uf-user').value.trim();
+  const password=document.getElementById('uf-pass').value;
+  const role=document.getElementById('uf-role').value;
+  const views=Array.from(document.querySelectorAll('.uf-view-cb:checked')).map(cb=>cb.value);
+  const res=document.getElementById('userform-result');
+  if(!username || !password){ res.className='modal-result err'; res.textContent='Preencha usuário e senha.'; return; }
+  let users=getUsers();
+  if(id){
+    const idx=users.findIndex(u=>u.id===Number(id));
+    if(users.some(u=>u.username===username && u.id!==Number(id))){ res.className='modal-result err'; res.textContent='Já existe um usuário com esse nome.'; return; }
+    if(users[idx].role==='admin' && role==='usuario' && users.filter(u=>u.role==='admin').length===1){ res.className='modal-result err'; res.textContent='Não é possível rebaixar o único administrador.'; return; }
+    users[idx]={...users[idx], username, password, role, views: role==='usuario'?views:[]};
+  } else {
+    if(users.some(u=>u.username===username)){ res.className='modal-result err'; res.textContent='Já existe um usuário com esse nome.'; return; }
+    const newId = users.reduce((m,u)=>Math.max(m,u.id),0)+1;
+    users.push({id:newId, username, password, role, views: role==='usuario'?views:[]});
+  }
+  saveUsers(users);
+  closeUserForm();
+  renderAdminUsers();
+  const s=getSession();
+  if(s && s.username===username){ setSession({username, role, views}); refreshAuthUI(); }
+}
+
+function deleteUser(id){
+  const users=getUsers();
+  const u=users.find(x=>x.id===id);
+  if(!u) return;
+  if(u.role==='admin' && users.filter(x=>x.role==='admin').length===1){ alert('Não é possível excluir o único administrador.'); return; }
+  if(!confirm(`Excluir o usuário "${u.username}"?`)) return;
+  saveUsers(users.filter(x=>x.id!==id));
+  renderAdminUsers();
+  const s=getSession();
+  if(s && s.username===u.username) doLogout();
 }
 
 // ── RENDER ────────────────────────────────────
@@ -1193,7 +1447,7 @@ function applyBulk(){
 }
 
 // ── NAVIGATION ────────────────────────────────
-const PG_NAMES={overview:'Dashboard',vendaenganosa:'Venda Enganosa',mba:'MBA pós 04/07',marco:'Marco A. Peixoto',classificar:'A Classificar',vazios:'Campos Vazios',orgao:'Órgão (CNJ)',escritorio:'Escritórios',bancoob:'Bancoob',cessao:'Cessão de Crédito',super200k:'Superendiv. >200k',estrat200k:'Estratégico >200k'};
+const PG_NAMES={overview:'Dashboard',vendaenganosa:'Venda Enganosa',mba:'MBA pós 04/07',marco:'Marco A. Peixoto',classificar:'A Classificar',vazios:'Campos Vazios',orgao:'Órgão (CNJ)',escritorio:'Escritórios',bancoob:'Bancoob',cessao:'Cessão de Crédito',super200k:'Superendiv. >200k',estrat200k:'Estratégico >200k',admin:'Administração'};
 function go(id, el){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
