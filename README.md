@@ -36,6 +36,18 @@ O Dashboard inicial abre com um resumo em texto (taxa geral de pendências, cate
 
 A seção "Acompanhamento" guarda um retrato (snapshot) do resumo da base a cada importação diferente, salvo no navegador (`localStorage`, sem servidor). Mostra evolução do total de pendências ao longo do tempo, comparação categoria a categoria com o retrato anterior e o histórico completo de retratos. Reabrir a mesma base não duplica o histórico, só uma mudança real nos dados gera um novo retrato. Administradores podem limpar esse histórico pelo próprio painel.
 
+## A Classificar — tarefas de complementação
+
+O card "Tarefas de complementação" no menu lateral importa o relatório de tarefas (ex.: exportação "Minhas tarefas" do sistema de tarefas). Ele só considera tarefas cujo título contenha "Complementar Cadastro" (ignora "AJUSTE DE CADASTRO" e qualquer outro tipo) e casa pela pasta ou processo extraídos do título com os registros de "A Classificar".
+
+A tabela de "A Classificar" não mostra mais analista, essa pendência é por falta de acesso à inicial, não erro de analista. Em vez disso mostra se já existe uma tarefa "Complementar Cadastro" aberta para aquela pasta e o prazo de atendimento (vindo da coluna "Prazo" do relatório de tarefas), que é o prazo de complementação que o escritório abre quando disponibiliza a inicial.
+
+## Regras de direcionamento por advogado
+
+Além do Marco Antonio Peixoto, existe a mesma lógica de painel para o advogado **Cleyton da Silva Barbosa** (CPF 025.063.501-10, OAB/MS 17.311): ações cadastradas a partir de 15/07/2026 devem ser direcionadas ao MBA Advogados, independente de causa raiz, com Samuel Ribeiro da Silva como responsável interno pela conferência.
+
+Esse painel lê de `D.cleyton_erros`, uma categoria nova que ainda não existe no snapshot de dados embutido no arquivo (o mesmo processo externo que já gera `D.marco_erros` e as demais categorias precisa passar a gerar também `D.cleyton_erros`, com os mesmos campos: `pasta`, `processo`, `dt_entrada`, `causa_raiz`, `escritorio_atual`). Até isso ser adicionado, o painel aparece corretamente no menu mas com "0 registros".
+
 ## Identidade visual
 
 O layout segue a paleta e a tipografia do SBK Brand Book 2026 (verde escuro como cor dominante, fonte Plus Jakarta Sans com fallback Calibri), no par de contraste "branco sobre verde escuro": o fundo de toda a aplicação, não só da tela de login, é um gradiente verde com uma animação leve de rede de pontos em canvas, fixa e contínua atrás de tudo.
