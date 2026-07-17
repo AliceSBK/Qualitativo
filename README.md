@@ -30,6 +30,12 @@ Esse controle é client-side: usuários, senhas, sessão e permissões ficam sal
 
 A tela de login tem a opção "Lembrar-me": quando marcada, a sessão fica salva entre reinícios do navegador (`localStorage`); quando desmarcada, encerra ao fechar a aba (`sessionStorage`). O link "Esqueceu a senha?" não redefine nada automaticamente (não há e-mail nem backend), só orienta a procurar um administrador para trocar a senha pelo painel.
 
+## Dashboard e acompanhamento
+
+O Dashboard inicial abre com um resumo em texto (taxa geral de pendências, categoria com maior concentração e variação desde a última importação), seguido de KPIs, da tabela mensal de erros, do gráfico de pendências por categoria e de um ranking dos escritórios com mais pendências, agregado por escritório, sem nomes de analistas.
+
+A seção "Acompanhamento" guarda um retrato (snapshot) do resumo da base a cada importação diferente, salvo no navegador (`localStorage`, sem servidor). Mostra evolução do total de pendências ao longo do tempo, comparação categoria a categoria com o retrato anterior e o histórico completo de retratos. Reabrir a mesma base não duplica o histórico, só uma mudança real nos dados gera um novo retrato. Administradores podem limpar esse histórico pelo próprio painel.
+
 ## Identidade visual
 
 O layout segue a paleta e a tipografia do SBK Brand Book 2026 (verde escuro como cor dominante, fonte Plus Jakarta Sans com fallback Calibri). O dashboard em si usa o par de contraste "verde escuro sobre off-white/branco"; a tela de login usa o par inverso, "branco sobre verde escuro", com um fundo em gradiente verde e uma animação leve de rede de pontos em canvas.

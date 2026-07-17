@@ -92,7 +92,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--ff);font-weight:30
 .panel{display:none}.panel.on{display:block}
 
 /* ── KPI ROW ── */
-.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.ov-insight{background:var(--teal3);border:1px solid rgba(42,124,121,.25);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--text);margin-bottom:14px;line-height:1.5}
+.krow{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:14px}
 .kpi{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
 .kpi:hover{background:var(--s2)}
 .ka{position:absolute;left:0;top:0;bottom:0;width:2px}
@@ -111,6 +112,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--ff);font-weight:30
 .g3{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:12px}
 .cc{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px}
 .cl{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.cl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cl-row .cl{margin-bottom:0}
+.cl-link{font-size:10px;font-weight:600;color:var(--teal2);cursor:pointer;text-decoration:none}
+.cl-link:hover{text-decoration:underline}
 .cw{position:relative}
 
 /* ── MONTH TABLE ── */
@@ -304,6 +309,10 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Dashboard
     </div>
+    <div class="ni" onclick="go('acompanhamento',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+      Acompanhamento
+    </div>
 
     <div class="sb-sec">Pendências</div>
     <div class="ni" onclick="go('classificar',this)">
@@ -455,11 +464,23 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
 
   <!-- ══ OVERVIEW ══ -->
   <div class="panel on" id="p-overview">
+    <div class="ov-insight" id="ov-insight">Carregando resumo…</div>
+
     <div class="krow">
       <div class="kpi"><div class="ka" style="background:var(--teal2)"></div>
         <div class="kl">Processos Ativos</div>
         <div class="kv" id="kv-tot" style="color:var(--text)">—</div>
         <div class="km">Em Andamento · 2026</div>
+      </div>
+      <div class="kpi"><div class="ka" style="background:var(--orange)"></div>
+        <div class="kl">Total de Pendências</div>
+        <div class="kv" id="kv-totpend" style="color:var(--orange)">—</div>
+        <div class="km">Todas as categorias</div>
+      </div>
+      <div class="kpi"><div class="ka" style="background:var(--red)"></div>
+        <div class="kl">Taxa de Erro Geral</div>
+        <div class="kv bad" id="kv-taxa">—</div>
+        <div class="km">Pendências / processos ativos</div>
       </div>
       <div class="kpi"><div class="ka" style="background:var(--yellow)"></div>
         <div class="kl">A Classificar</div>
@@ -498,8 +519,76 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
     </div>
 
     <div class="cc" style="margin-bottom:12px">
-      <div class="cl">Top analistas — erros de classificação (fonte: produtividade)</div>
+      <div class="cl-row">
+        <div class="cl">Escritórios com mais pendências</div>
+        <a class="cl-link" onclick="go('acompanhamento')">Ver evolução completa →</a>
+      </div>
       <div id="ov-rank" style="margin-top:4px"></div>
+    </div>
+  </div>
+
+  <!-- ══ ACOMPANHAMENTO ══ -->
+  <div class="panel" id="p-acompanhamento">
+    <div class="sh">
+      <h2>Acompanhamento — Evolução entre importações</h2>
+      <div class="sh-r">
+        <button class="btn" id="acomp-clear-btn" onclick="clearHistory()" style="display:none">Limpar histórico</button>
+      </div>
+    </div>
+
+    <div id="acomp-empty" style="display:none">
+      <div class="cc" style="text-align:center;padding:40px 20px;color:var(--t2);font-size:12px;line-height:1.6">
+        Ainda não há histórico suficiente para mostrar evolução.<br>Um retrato é salvo automaticamente sempre que uma planilha diferente é importada. Volte aqui após a próxima atualização da base.
+      </div>
+    </div>
+
+    <div id="acomp-body">
+      <div class="krow" style="grid-template-columns:repeat(auto-fit,minmax(155px,1fr))">
+        <div class="kpi">
+          <div class="ka" style="background:var(--orange)"></div>
+          <div class="kl">Pendências (retrato atual)</div>
+          <div class="kv" id="acomp-kv-tot" style="color:var(--orange)">—</div>
+          <div class="km">Todas as categorias</div>
+        </div>
+        <div class="kpi">
+          <div class="ka" style="background:var(--teal2)"></div>
+          <div class="kl">Variação desde a última</div>
+          <div class="kv" id="acomp-kv-delta" style="color:var(--text)">—</div>
+          <div class="km">Comparado ao retrato anterior</div>
+        </div>
+        <div class="kpi">
+          <div class="ka" style="background:var(--blue)"></div>
+          <div class="kl">Retratos registrados</div>
+          <div class="kv" id="acomp-kv-n" style="color:var(--blue)">—</div>
+          <div class="km">Neste navegador</div>
+        </div>
+      </div>
+
+      <div class="cc" style="margin-bottom:12px">
+        <div class="cl">Total de pendências ao longo do tempo</div>
+        <div class="cw" style="height:220px"><canvas id="ch-hist"></canvas></div>
+      </div>
+
+      <div class="g3">
+        <div class="cc">
+          <div class="cl">Por categoria — atual vs. retrato anterior</div>
+          <table class="mt">
+            <thead><tr><th>Categoria</th><th>Atual</th><th>Variação</th></tr></thead>
+            <tbody id="acomp-cat-body"></tbody>
+          </table>
+        </div>
+        <div class="cc">
+          <div class="cl">Histórico de retratos</div>
+          <table class="mt">
+            <thead><tr><th>Data</th><th>Processos</th><th>Pendências</th><th>Variação</th></tr></thead>
+            <tbody id="acomp-hist-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="background:var(--blu2);border:1px solid rgba(27,111,168,.2);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--blue);line-height:1.5">
+        O histórico fica salvo só neste navegador (sem servidor). Um novo retrato é gravado automaticamente quando os dados importados mudam; reabrir a mesma base não duplica o histórico.
+      </div>
     </div>
   </div>
 
@@ -1078,6 +1167,8 @@ function applyViewRestrictions(s){
     ni.style.display = allowed ? '' : 'none';
   });
   document.getElementById('nav-admin').style.display = (s && s.role==='admin') ? '' : 'none';
+  const clearBtn=document.getElementById('acomp-clear-btn');
+  if(clearBtn) clearBtn.style.display = (s && s.role==='admin') ? '' : 'none';
   if(restricted && CUR!=='overview' && !(s.views||[]).includes(CUR)) go('overview');
 }
 
@@ -1175,11 +1266,15 @@ function deleteUser(id){
 function render(d){
   const s = d.summary||{};
   const tot = Object.values(s).reduce((a,b)=>a+b,0);
+  recordSnapshot(d);
 
   // KPIs
   anim('kv-tot', d.total_processos||0);
   anim('kv-ac',  s.a_classificar||0);
   anim('kv-og',  s.orgao||0);
+  anim('kv-totpend', tot);
+  const taxaGeral = d.total_processos ? (tot/d.total_processos*100) : 0;
+  document.getElementById('kv-taxa').textContent = taxaGeral.toFixed(1)+'%';
 
   // Nav badges
   const nbMap = { 'nb-ac':s.a_classificar, 'nb-vz':s.campos_vazios, 'nb-og':s.orgao,
@@ -1220,11 +1315,36 @@ function render(d){
   const cMba=document.getElementById('c-mba'); if(cMba) cMba.textContent=((s.mba_pos_jul4||0).toLocaleString('pt-BR'))+' registros';
   const cMrc=document.getElementById('c-mrc'); if(cMrc) cMrc.textContent=((s.marco_antonio||0).toLocaleString('pt-BR'))+' registros';
   renderMBA(); renderMRC();
+
+  recordSnapshot(d);
+  renderAcompanhamento();
 }
 
 // ── OVERVIEW ──────────────────────────────────
 let CH_CAT = null;
+const CAT_LABELS = {a_classificar:'A Classificar',campos_vazios:'Campos Vazios',venda_enganosa:'Venda Enganosa',orgao:'Órgão (CNJ)',escritorio:'Escritórios',mba_pos_jul4:'MBA pós 04/07',marco_antonio:'Marco A. Peixoto',bancoob:'Bancoob',cessao:'Cessão de Crédito',super_200k:'Superendiv. >200k',estrategico_200k:'Estratégico >200k'};
+function buildInsight(d){
+  const s = d.summary||{};
+  const tot = Object.values(s).reduce((a,b)=>a+b,0);
+  const taxa = d.total_processos ? (tot/d.total_processos*100) : 0;
+  let topCat=null, topVal=-1;
+  Object.entries(s).forEach(([k,v])=>{ if(v>topVal){ topVal=v; topCat=k; } });
+  let trend='';
+  const hist=getHistory();
+  if(hist.length>1){
+    const delta = tot - hist[hist.length-2].tot;
+    if(delta>0) trend=` As pendências aumentaram em ${delta.toLocaleString('pt-BR')} desde o último retrato.`;
+    else if(delta<0) trend=` As pendências caíram em ${Math.abs(delta).toLocaleString('pt-BR')} desde o último retrato.`;
+    else trend=' Sem variação desde o último retrato.';
+  }
+  const el=document.getElementById('ov-insight');
+  if(el) el.textContent = topVal>0
+    ? `Taxa geral de pendências: ${taxa.toFixed(1)}% dos processos ativos. Maior concentração em "${CAT_LABELS[topCat]||topCat}" (${topVal.toLocaleString('pt-BR')} casos).${trend}`
+    : `Nenhuma pendência identificada na base atual. Taxa geral de pendências: ${taxa.toFixed(1)}%.${trend}`;
+}
 function buildOverview(d){
+  buildInsight(d);
+
   // Monthly table
   const ms = d.monthly_stats||[];
   document.getElementById('ov-mt').innerHTML = ms.map(m=>{
@@ -1250,6 +1370,7 @@ function buildOverview(d){
   const vals  = [s.a_classificar||0,s.campos_vazios||0,s.orgao||0,s.venda_enganosa||0,s.escritorio||0,s.bancoob||0,s.cessao||0,s.super_200k||0,s.estrategico_200k||0];
   const cols  = ['#A9791F','#707A83','#C23B32','#B5651D','#C23B32','#B5651D','#1B6FA8','#6A4FB0','#C97A6B'];
   const G={color:'rgba(2,54,49,.07)'}, T={color:'#707A83',font:{size:9}};
+  try{
   if(CH_CAT) CH_CAT.destroy();
   CH_CAT = new Chart(document.getElementById('ch-cat'),{
     type:'bar',
@@ -1258,17 +1379,97 @@ function buildOverview(d){
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.x.toLocaleString('pt-BR')}`}}},
       scales:{x:{grid:G,ticks:T},y:{grid:{display:false},ticks:{...T,font:{size:10}}}}}
   });
+  }catch(ex){ console.warn('Gráfico de categorias não carregou (Chart.js indisponível):', ex.message); }
 
-  // Analista rank
-  const rank = d.an_ranking||[];
+  // Ranking por escritório (agregado, sem nome de pessoa)
+  const counts={};
+  (d.escritorio||[]).forEach(r=>{ const k=r.escritorio_atual||'Não informado'; counts[k]=(counts[k]||0)+1; });
+  const rank = Object.entries(counts).map(([nome,total])=>({nome,total})).sort((a,b)=>b.total-a.total);
   const max = rank[0]?.total||1;
-  document.getElementById('ov-rank').innerHTML = rank.slice(0,12).map((a,i)=>`
-    <div class="ar-row">
-      <span class="ar-n">${i+1}</span>
-      <span class="ar-name" title="${a.nome}">${a.nome.split(' ').slice(0,3).join(' ')}</span>
-      <div class="ar-bar"><div class="ar-fill" style="width:${Math.round(a.total/max*100)}%"></div></div>
-      <span class="ar-val">${a.total}</span>
-    </div>`).join('');
+  const rankEl=document.getElementById('ov-rank');
+  if(rank.length){
+    rankEl.innerHTML = rank.slice(0,12).map((a,i)=>`
+      <div class="ar-row">
+        <span class="ar-n">${i+1}</span>
+        <span class="ar-name" title="${a.nome}">${a.nome}</span>
+        <div class="ar-bar"><div class="ar-fill" style="width:${Math.round(a.total/max*100)}%"></div></div>
+        <span class="ar-val">${a.total}</span>
+      </div>`).join('');
+  } else {
+    rankEl.innerHTML = `<div style="color:var(--t3);font-size:11px;padding:8px 0">Nenhuma pendência de escritório na base atual.</div>`;
+  }
+}
+
+// ── ACOMPANHAMENTO (histórico entre importações) ──
+// Guardado só no navegador (localStorage). A cada render(), se o resumo
+// da base mudou desde o último retrato salvo, grava um novo retrato.
+function getHistory(){ return JSON.parse(localStorage.getItem('qc_history')||'[]'); }
+function saveHistory(h){ localStorage.setItem('qc_history', JSON.stringify(h)); }
+function recordSnapshot(d){
+  const s=d.summary||{};
+  const tot=Object.values(s).reduce((a,b)=>a+b,0);
+  const sig=JSON.stringify(s)+'|'+(d.total_processos||0);
+  const hist=getHistory();
+  const last=hist[hist.length-1];
+  if(last && last.sig===sig) return;
+  hist.push({ts:Date.now(), sig, total_processos:d.total_processos||0, tot, summary:{...s}});
+  if(hist.length>60) hist.shift();
+  saveHistory(hist);
+}
+function clearHistory(){
+  if(!confirm('Isso vai apagar todo o histórico de acompanhamento salvo neste navegador. Continuar?')) return;
+  localStorage.removeItem('qc_history');
+  renderAcompanhamento();
+  buildInsight(D);
+}
+let CH_HIST=null;
+function renderAcompanhamento(){
+  const hist=getHistory();
+  const empty=document.getElementById('acomp-empty');
+  const body=document.getElementById('acomp-body');
+  if(!empty||!body) return;
+  if(hist.length<2){
+    empty.style.display='block';
+    body.style.display='none';
+    return;
+  }
+  empty.style.display='none';
+  body.style.display='block';
+
+  const last=hist[hist.length-1], prev=hist[hist.length-2];
+  const delta=last.tot-prev.tot;
+  document.getElementById('acomp-kv-tot').textContent=last.tot.toLocaleString('pt-BR');
+  document.getElementById('acomp-kv-n').textContent=hist.length.toLocaleString('pt-BR');
+  const dEl=document.getElementById('acomp-kv-delta');
+  dEl.textContent=(delta>0?'+':'')+delta.toLocaleString('pt-BR');
+  dEl.style.color = delta>0?'var(--red)':delta<0?'var(--teal2)':'var(--t2)';
+
+  const G={color:'rgba(2,54,49,.07)'}, T={color:'#707A83',font:{size:9}};
+  const labels=hist.map(h=>new Date(h.ts).toLocaleDateString('pt-BR'));
+  const vals=hist.map(h=>h.tot);
+  try{
+  if(CH_HIST) CH_HIST.destroy();
+  CH_HIST=new Chart(document.getElementById('ch-hist'),{
+    type:'line',
+    data:{labels, datasets:[{data:vals, borderColor:'#2A7C79', backgroundColor:'rgba(42,124,121,.14)', fill:true, tension:.3, pointRadius:3, pointBackgroundColor:'#2A7C79'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y.toLocaleString('pt-BR')} pendências`}}},
+      scales:{x:{grid:{display:false},ticks:T},y:{grid:G,ticks:T,beginAtZero:true}}}
+  });
+  }catch(ex){ console.warn('Gráfico de acompanhamento não carregou (Chart.js indisponível):', ex.message); }
+
+  document.getElementById('acomp-cat-body').innerHTML = Object.entries(CAT_LABELS).map(([k,label])=>{
+    const cur=last.summary[k]||0, bef=prev.summary[k]||0, dv=cur-bef;
+    const dColor = dv>0?'var(--red)':dv<0?'var(--teal2)':'var(--t3)';
+    return `<tr><td>${label}</td><td>${cur.toLocaleString('pt-BR')}</td><td style="color:${dColor};font-weight:600">${(dv>0?'+':'')+dv.toLocaleString('pt-BR')}</td></tr>`;
+  }).join('');
+
+  document.getElementById('acomp-hist-body').innerHTML = hist.slice().reverse().map((h,i)=>{
+    const p = hist[hist.length-2-i];
+    const dv = p ? h.tot-p.tot : null;
+    const dLabel = dv===null ? '—' : (dv>0?'+':'')+dv.toLocaleString('pt-BR');
+    const dColor = dv===null?'var(--t3)':dv>0?'var(--red)':dv<0?'var(--teal2)':'var(--t3)';
+    return `<tr><td>${new Date(h.ts).toLocaleDateString('pt-BR')} ${new Date(h.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</td><td>${h.total_processos.toLocaleString('pt-BR')}</td><td>${h.tot.toLocaleString('pt-BR')}</td><td style="color:${dColor};font-weight:600">${dLabel}</td></tr>`;
+  }).join('');
 }
 
 // ── DROPDOWNS ─────────────────────────────────
@@ -1586,7 +1787,7 @@ function applyBulk(){
 }
 
 // ── NAVIGATION ────────────────────────────────
-const PG_NAMES={overview:'Dashboard',vendaenganosa:'Venda Enganosa',mba:'MBA pós 04/07',marco:'Marco A. Peixoto',classificar:'A Classificar',vazios:'Campos Vazios',orgao:'Órgão (CNJ)',escritorio:'Escritórios',bancoob:'Bancoob',cessao:'Cessão de Crédito',super200k:'Superendiv. >200k',estrat200k:'Estratégico >200k',admin:'Administração'};
+const PG_NAMES={overview:'Dashboard',acompanhamento:'Acompanhamento',vendaenganosa:'Venda Enganosa',mba:'MBA pós 04/07',marco:'Marco A. Peixoto',classificar:'A Classificar',vazios:'Campos Vazios',orgao:'Órgão (CNJ)',escritorio:'Escritórios',bancoob:'Bancoob',cessao:'Cessão de Crédito',super200k:'Superendiv. >200k',estrat200k:'Estratégico >200k',admin:'Administração'};
 function go(id, el){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
