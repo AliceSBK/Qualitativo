@@ -4,24 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Qualidade de Cadastro — Legal Ops Cível</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#0d1117;--s1:#161b22;--s2:#21262d;--s3:#30363d;--s4:#3a424d;
-  --teal:#2ea86e;--teal2:#3dd68c;--teal3:rgba(61,214,140,.12);
-  --red:#f85149;--red2:rgba(248,81,73,.12);
-  --yellow:#e3b341;--yel2:rgba(227,179,65,.12);
-  --blue:#58a6ff;--blu2:rgba(88,166,255,.12);
-  --orange:#f0883e;--ora2:rgba(240,136,62,.12);
-  --purple:#bc8cff;--pur2:rgba(188,140,255,.12);
-  --text:#e6edf3;--t2:#8b949e;--t3:#6e7681;--t4:#484f58;
-  --border:#30363d;--bor2:#21262d;
+  /* SBK Brand Book 2026 */
+  --bg:#ECEFF3;--s1:#FFFFFF;--s2:#F3F5F7;--s3:#E4E9EC;--s4:#D7DEE2;
+  --teal:#023631;--teal2:#2A7C79;--teal3:rgba(42,124,121,.12);
+  --red:#C23B32;--red2:rgba(194,59,50,.12);
+  --yellow:#A9791F;--yel2:rgba(169,121,31,.12);
+  --blue:#1B6FA8;--blu2:rgba(27,111,168,.12);
+  --orange:#B5651D;--ora2:rgba(181,101,29,.12);
+  --purple:#6A4FB0;--pur2:rgba(106,79,176,.12);
+  --text:#023631;--t2:#4A545E;--t3:#707A83;--t4:#A3ABB2;
+  --border:#DCE1E5;--bor2:#E8ECEF;
   --r:8px;--r2:5px;
-  --ff:'Segoe UI',system-ui,sans-serif;--fm:'Consolas','Courier New',monospace;
+  --ff:'Plus Jakarta Sans',Calibri,sans-serif;--fm:'Consolas','Courier New',monospace;
 }
-body{background:var(--bg);color:var(--text);font-family:var(--ff);font-size:13px;display:flex;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:var(--ff);font-weight:300;font-size:13px;display:flex;min-height:100vh}
 
 /* ── SIDEBAR ── */
 .sb{width:238px;min-width:238px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
@@ -37,7 +41,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--ff);font-size:13px
 .up-lbl svg{width:10px;height:10px;flex-shrink:0}
 .up-hint{font-size:9px;color:var(--t3);margin-top:3px;line-height:1.4}
 .up-hint.ok{color:var(--teal2)}.up-hint.err{color:var(--red)}
-.up-note{font-size:9px;color:var(--blue);background:var(--blu2);border:1px solid rgba(88,166,255,.2);border-radius:3px;padding:4px 7px;line-height:1.5}
+.up-note{font-size:9px;color:var(--blue);background:var(--blu2);border:1px solid rgba(27,111,168,.2);border-radius:3px;padding:4px 7px;line-height:1.5}
 
 .sb-nav{flex:1;padding:6px 0}
 .sb-sec{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t4);padding:9px 15px 4px}
@@ -116,13 +120,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--ff);font-size:13px
 .tw{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 .tbar{display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .tin{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:var(--r2);font-size:11px;font-family:var(--ff);outline:none;flex:1;min-width:150px;transition:.13s}
-.tin:focus{border-color:rgba(61,214,140,.5)}
+.tin:focus{border-color:rgba(42,124,121,.5)}
 .tsel{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:var(--r2);font-size:11px;font-family:var(--ff);outline:none;cursor:pointer}
-.tsel:focus{border-color:rgba(61,214,140,.5)}
+.tsel:focus{border-color:rgba(42,124,121,.5)}
 table{width:100%;border-collapse:collapse}
 thead th{background:var(--s2);padding:7px 11px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--border);white-space:nowrap}
 tbody tr{border-bottom:1px solid var(--bor2);transition:background .08s}
-tbody tr:hover{background:rgba(255,255,255,.015)}
+tbody tr:hover{background:rgba(2,54,49,.035)}
 tbody td{padding:6px 11px;vertical-align:middle}
 .mo{font-family:var(--fm);font-size:10px;color:var(--t2)}
 .bad{color:var(--red)}.gd{color:var(--teal2)}.ya{color:var(--yellow)}
@@ -163,7 +167,7 @@ tbody td{padding:6px 11px;vertical-align:middle}
 .modal h3{font-size:14px;font-weight:600;margin-bottom:6px}
 .modal p{font-size:11px;color:var(--t2);margin-bottom:12px;line-height:1.5}
 .modal textarea{width:100%;height:140px;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:var(--r2);font-size:11px;font-family:var(--fm);resize:vertical;outline:none;line-height:1.6}
-.modal textarea:focus{border-color:rgba(61,214,140,.5)}
+.modal textarea:focus{border-color:rgba(42,124,121,.5)}
 .modal-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
 .modal-hint{font-size:10px;color:var(--t3)}
 .modal-btns{display:flex;gap:7px}
@@ -174,14 +178,47 @@ tbody td{padding:6px 11px;vertical-align:middle}
 /* ── CHECKBOX ── */
 .cb-col{width:28px}
 input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--teal2)}
-.sel-bar{display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--teal3);border-bottom:1px solid rgba(61,214,140,.2);font-size:11px;color:var(--teal2)}
+.sel-bar{display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--teal3);border-bottom:1px solid rgba(42,124,121,.2);font-size:11px;color:var(--teal2)}
 .sel-bar.hidden{display:none}
+
+/* ── AUTH GATE ── */
+.auth-gate{display:none}
+body.gate-active .sb, body.gate-active .main{display:none}
+body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:var(--bg)}
+.auth-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:34px 32px;width:360px;max-width:90vw;box-shadow:0 16px 40px rgba(2,54,49,.14);text-align:center}
+.auth-logo{height:40px;display:block;margin:0 auto 20px}
+.auth-card h1{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
+.auth-card p{font-size:11px;color:var(--t2);margin-bottom:18px;line-height:1.5}
+.auth-in{width:100%;margin-bottom:9px;padding:8px 10px}
+.auth-btn{width:100%;justify-content:center;margin-top:2px;padding:9px 0}
+.auth-hint{font-size:10px;color:var(--t2);background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:7px 9px;margin-bottom:9px;line-height:1.5;text-align:left;display:none}
+.auth-logo{height:40px;display:block;margin:0 auto 20px}
+
+/* ── BRAND MARK (placeholder até termos a logo em SVG/PNG alta resolução) ── */
+.brand-mark{display:inline-flex;align-items:center;font-family:var(--ff);font-weight:600;letter-spacing:.05em;color:var(--teal);position:relative;padding:3px 12px}
+.brand-mark::before,.brand-mark::after{content:'';position:absolute;top:0;bottom:0;width:7px;border:1.5px solid var(--teal);opacity:.55}
+.brand-mark::before{left:0;border-right:none;border-radius:3px 0 0 3px}
+.brand-mark::after{right:0;border-left:none;border-radius:0 3px 3px 0}
 </style>
 </head>
-<body>
+<body class="gate-active">
+
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-card">
+    <div class="brand-mark" style="font-size:22px;margin:0 auto 20px;justify-content:center">SBK</div>
+    <h1>Qualidade de Cadastro</h1>
+    <p>Entre com seu usuário e senha para acessar o sistema.</p>
+    <div class="auth-hint" id="gate-hint"></div>
+    <input class="tin auth-in" id="gate-user" placeholder="Usuário" autocomplete="username">
+    <input class="tin auth-in" id="gate-pass" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="modal-result" id="gate-result"></div>
+    <button class="btn hi auth-btn" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
 
 <aside class="sb">
   <div class="sb-logo">
+    <div class="brand-mark" style="font-size:13px;margin-bottom:9px">SBK</div>
     <h2>Qualidade de Cadastro</h2>
     <p>Somente <strong style="color:var(--teal2)">CIVE · Em Andamento</strong> · 2026<br><span style="color:var(--t3);font-size:9px">Base: 16/07/2026</span></p>
   </div>
@@ -198,7 +235,7 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
     </div>
     <div class="up-blk">
       <div class="up-tag">Produtividade (analistas)</div>
-      <label class="up-lbl" for="upf-prod" style="border-color:rgba(88,166,255,.3);color:var(--blue)">
+      <label class="up-lbl" for="upf-prod" style="border-color:rgba(27,111,168,.3);color:var(--blue)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Importar .xlsx
       </label>
@@ -277,7 +314,7 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
     </div>
 
     <div class="sb-sec">Administração</div>
-    <div class="ni" onclick="openAdmin(this)">
+    <div class="ni" id="nav-admin" onclick="openAdmin(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Administração
     </div>
@@ -288,8 +325,8 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
     <div class="sf">Total pendências <b class="r" id="sf-err">—</b></div>
     <div class="sf">Marcados corrigidos <b class="g" id="sf-corr">0</b></div>
     <div id="sf-auth" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--t2)">
-      <span id="sf-auth-label">Visitante</span>
-      <a href="javascript:void(0)" id="sf-auth-action" onclick="openLogin()" style="color:var(--blue);font-weight:600;text-decoration:none">Entrar</a>
+      <span id="sf-auth-label">—</span>
+      <a href="javascript:void(0)" id="sf-auth-action" onclick="doLogout()" style="color:var(--blue);font-weight:600;text-decoration:none">Sair</a>
     </div>
   </div>
 </aside>
@@ -306,27 +343,6 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
       <div class="modal-btns">
         <button class="btn" onclick="closeModal()">Cancelar</button>
         <button class="btn hi" onclick="applyBulk()">Marcar corrigidos</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- LOGIN MODAL -->
-<div class="modal-overlay" id="login-overlay" onclick="if(event.target===this)closeLogin()">
-  <div class="modal" style="width:340px">
-    <h3>Entrar</h3>
-    <p>Informe seu usuário e senha para acessar áreas restritas.</p>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <input class="tin" id="login-user" placeholder="Usuário" autocomplete="username">
-      <input class="tin" id="login-pass" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
-    <div id="login-default-hint" style="font-size:10px;color:var(--t3);background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:6px 9px;margin-top:8px;line-height:1.5"></div>
-    <div class="modal-result" id="login-result"></div>
-    <div class="modal-foot">
-      <span class="modal-hint"></span>
-      <div class="modal-btns">
-        <button class="btn" onclick="closeLogin()">Cancelar</button>
-        <button class="btn hi" onclick="doLogin()">Entrar</button>
       </div>
     </div>
   </div>
@@ -531,7 +547,7 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
         <button class="btn hi" onclick="exportCat('orgao')">Exportar CSV</button>
       </div>
     </div>
-    <div style="background:var(--blu2);border:1px solid rgba(88,166,255,.2);border-radius:var(--r2);padding:7px 11px;font-size:11px;color:var(--blue);margin-bottom:10px;line-height:1.5">
+    <div style="background:var(--blu2);border:1px solid rgba(27,111,168,.2);border-radius:var(--r2);padding:7px 11px;font-size:11px;color:var(--blue);margin-bottom:10px;line-height:1.5">
       Analista identificado pela base de produtividade. Processos TRT (J=5) são tratados como JF — o órgão esperado sempre será a Justiça Federal correspondente.
     </div>
     <div class="tw">
@@ -700,7 +716,7 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
         <button class="btn hi" onclick="exportCat('mba')">Exportar CSV</button>
       </div>
     </div>
-    <div style="background:var(--red2);border:1px solid rgba(248,81,73,.25);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--red);margin-bottom:11px;line-height:1.5">
+    <div style="background:var(--red2);border:1px solid rgba(194,59,50,.25);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--red);margin-bottom:11px;line-height:1.5">
       MBA Advogados encerrou em 04/07/2026. Qualquer processo cadastrado a partir desta data com MBA como escritório é um erro de distribuição.
     </div>
     <div class="tw">
@@ -786,7 +802,7 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
         <button class="btn hi" onclick="exportCat('marco')">Exportar CSV</button>
       </div>
     </div>
-    <div style="background:var(--blu2);border:1px solid rgba(88,166,255,.2);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:11px;line-height:1.5">
+    <div style="background:var(--blu2);border:1px solid rgba(27,111,168,.2);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:11px;line-height:1.5">
       Causa raiz "Exibição de contrato" ou "Revisão de Juros" com advogado do autor <strong>Marco Antonio Peixoto</strong>, cadastrados a partir de 04/07/2026, devem ser direcionados ao <strong>Lima e Feigelson Advogados</strong>.
     </div>
     <div class="tw">
@@ -826,7 +842,7 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
         </button>
       </div>
     </div>
-    <div style="background:var(--yel2);border:1px solid rgba(227,179,65,.25);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--yellow);margin-bottom:11px;line-height:1.5">
+    <div style="background:var(--yel2);border:1px solid rgba(169,121,31,.25);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--yellow);margin-bottom:11px;line-height:1.5">
       Este controle de acesso roda inteiramente no navegador, sem servidor. É útil para organizar quem enxerga o quê, mas não deve ser tratado como proteção real contra alguém com conhecimento técnico que inspecione o código da página.
     </div>
     <div class="tw">
@@ -858,15 +874,15 @@ const norm = p => String(p).trim().replace(/\s/g,'');
 // ── INIT ──────────────────────────────────────
 function init(){
   document.getElementById('tb-dt').textContent = new Date().toLocaleDateString('pt-BR');
-  render(D);
-  refreshAuthUI();
+  const s=getSession();
+  if(s){ unlockApp(s); } else { showGate(); }
 }
 
 // ── AUTH / USUÁRIOS ────────────────────────────
 // Controle de acesso simples, roda só no navegador (sem servidor/backend).
-// Serve para organizar quem enxerga o quê, não é proteção real: os dados
-// de usuário/senha ficam salvos no localStorage do próprio navegador.
-let pendingAdminOpen = false;
+// Login é obrigatório para ver qualquer coisa do dashboard, mas isso ainda
+// não é proteção real: usuário/senha ficam salvos no localStorage do
+// próprio navegador, visíveis a quem inspecionar o código da página.
 const viewKeys = () => Object.keys(PG_NAMES).filter(k=>k!=='admin');
 
 function getUsers(){
@@ -881,56 +897,40 @@ function saveUsers(list){ localStorage.setItem('qc_users', JSON.stringify(list))
 function getSession(){ return JSON.parse(sessionStorage.getItem('qc_session')||'null'); }
 function setSession(s){ if(s) sessionStorage.setItem('qc_session', JSON.stringify(s)); else sessionStorage.removeItem('qc_session'); }
 
-function openLogin(){
-  document.getElementById('login-user').value='';
-  document.getElementById('login-pass').value='';
-  document.getElementById('login-result').className='modal-result';
-  document.getElementById('login-result').textContent='';
-  const hint=document.getElementById('login-default-hint');
+function showGate(){
+  document.body.classList.add('gate-active');
+  document.getElementById('gate-user').value='';
+  document.getElementById('gate-pass').value='';
+  document.getElementById('gate-result').className='modal-result';
+  document.getElementById('gate-result').textContent='';
+  const hint=document.getElementById('gate-hint');
   const stillDefault = getUsers().some(u=>u.username==='admin' && u.password==='admin123');
   hint.textContent = stillDefault ? 'Primeiro acesso: usuário admin, senha admin123. Depois de entrar, troque a senha no painel de Administração.' : '';
   hint.style.display = stillDefault ? 'block' : 'none';
-  document.getElementById('login-overlay').classList.add('on');
-  document.getElementById('login-user').focus();
 }
-function closeLogin(){
-  document.getElementById('login-overlay').classList.remove('on');
-  pendingAdminOpen=false;
+function unlockApp(s){
+  document.body.classList.remove('gate-active');
+  refreshAuthUI();
+  render(D);
 }
 function doLogin(){
-  const user=document.getElementById('login-user').value.trim();
-  const pass=document.getElementById('login-pass').value;
+  const user=document.getElementById('gate-user').value.trim();
+  const pass=document.getElementById('gate-pass').value;
   const found=getUsers().find(u=>u.username===user && u.password===pass);
-  const res=document.getElementById('login-result');
+  const res=document.getElementById('gate-result');
   if(!found){ res.className='modal-result err'; res.textContent='Usuário ou senha inválidos.'; return; }
   setSession({username:found.username, role:found.role, views:found.views||[]});
-  document.getElementById('login-overlay').classList.remove('on');
-  refreshAuthUI();
-  if(pendingAdminOpen){
-    pendingAdminOpen=false;
-    if(found.role==='admin'){ renderAdminUsers(); go('admin'); }
-    else alert('Este usuário não tem permissão de administrador.');
-  }
+  unlockApp(getSession());
 }
 function doLogout(){
   setSession(null);
-  refreshAuthUI();
-  if(CUR==='admin') go('overview');
+  CUR='overview';
+  showGate();
 }
 
 function refreshAuthUI(){
   const s=getSession();
-  const label=document.getElementById('sf-auth-label');
-  const action=document.getElementById('sf-auth-action');
-  if(s){
-    label.textContent = s.username+' · '+(s.role==='admin'?'Admin':'Usuário');
-    action.textContent='Sair';
-    action.onclick=doLogout;
-  } else {
-    label.textContent='Visitante';
-    action.textContent='Entrar';
-    action.onclick=openLogin;
-  }
+  document.getElementById('sf-auth-label').textContent = s.username+' · '+(s.role==='admin'?'Admin':'Usuário');
   applyViewRestrictions(s);
 }
 
@@ -943,14 +943,14 @@ function applyViewRestrictions(s){
     const allowed = !restricted || id==='overview' || (s.views||[]).includes(id);
     ni.style.display = allowed ? '' : 'none';
   });
+  document.getElementById('nav-admin').style.display = (s && s.role==='admin') ? '' : 'none';
   if(restricted && CUR!=='overview' && !(s.views||[]).includes(CUR)) go('overview');
 }
 
 function openAdmin(el){
   const s=getSession();
-  if(s && s.role==='admin'){ renderAdminUsers(); go('admin', el); return; }
-  pendingAdminOpen=true;
-  openLogin();
+  if(s && s.role==='admin'){ renderAdminUsers(); go('admin', el); }
+  else alert('Acesso restrito a administradores.');
 }
 
 function renderAdminUsers(){
@@ -1114,8 +1114,8 @@ function buildOverview(d){
   const s = d.summary||{};
   const cats  = ['A Classificar','Campos Vazios','Órgão','Venda Enganosa','Escritórios','Bancoob','Cessão','Super >200k','Estrat. >200k'];
   const vals  = [s.a_classificar||0,s.campos_vazios||0,s.orgao||0,s.venda_enganosa||0,s.escritorio||0,s.bancoob||0,s.cessao||0,s.super_200k||0,s.estrategico_200k||0];
-  const cols  = ['#e3b341','#6e7681','#f85149','#f0883e','#f85149','#f0883e','#58a6ff','#bc8cff','#ff7b72'];
-  const G={color:'rgba(255,255,255,.04)'}, T={color:'#6e7681',font:{size:9}};
+  const cols  = ['#A9791F','#707A83','#C23B32','#B5651D','#C23B32','#B5651D','#1B6FA8','#6A4FB0','#C97A6B'];
+  const G={color:'rgba(2,54,49,.07)'}, T={color:'#707A83',font:{size:9}};
   if(CH_CAT) CH_CAT.destroy();
   CH_CAT = new Chart(document.getElementById('ch-cat'),{
     type:'bar',
@@ -1298,7 +1298,7 @@ function onCardCB(cb){
       pill.textContent = cb.checked ? 'Corrigido' : 'Pendente';
     }
     card.style.opacity = cb.checked ? '.55' : '';
-    card.style.borderColor = cb.checked ? 'rgba(61,214,140,.3)' : '';
+    card.style.borderColor = cb.checked ? 'rgba(42,124,121,.3)' : '';
   }
 }
 
@@ -1315,7 +1315,7 @@ function renderCards(cat, data, elId, showVl=false){
   el.innerHTML=data.slice(0,200).map(r=>{
     const k=key(r,cat);
     const corrido=isCorr(k);
-    return `<div class="card" style="${corrido?'opacity:.55;border-color:rgba(61,214,140,.3)':''}">
+    return `<div class="card" style="${corrido?'opacity:.55;border-color:rgba(42,124,121,.3)':''}">
       <div class="card-top">
         <div style="display:flex;align-items:flex-start;gap:8px">
           <input type="checkbox" class="card-cb" data-key="${k}" data-cat="${cat}"
