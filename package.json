@@ -1,0 +1,11 @@
+{
+  "name": "qualitativo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Qualidade de Cadastro — dashboard com backend compartilhado (Vercel + Postgres).",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.22.0"
+  }
+}
