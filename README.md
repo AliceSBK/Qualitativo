@@ -32,7 +32,7 @@ A tela de login tem a opção "Lembrar-me": quando marcada, a sessão fica salva
 
 ## Dashboard e acompanhamento
 
-O Dashboard inicial abre com um resumo em texto (taxa geral de pendências, categoria com maior concentração e variação desde a última importação), seguido de KPIs, da tabela mensal de erros, do gráfico de pendências por categoria e de um ranking dos escritórios com mais pendências, agregado por escritório, sem nomes de analistas.
+O Dashboard inicial abre com um resumo em texto (taxa geral de pendências, categoria com maior concentração e variação desde a última importação), seguido de KPIs, da tabela mensal de erros, do gráfico de pendências por categoria e de um ranking dos escritórios com mais pendências, agregado por escritório, sem nomes de analistas. O ranking soma erros de roteamento (Escritórios) e pendências de "A Classificar", já que disponibilizar a inicial é responsabilidade do escritório que detém a pasta.
 
 A seção "Acompanhamento" guarda um retrato (snapshot) do resumo da base a cada importação diferente, salvo no navegador (`localStorage`, sem servidor). Mostra evolução do total de pendências ao longo do tempo, comparação categoria a categoria com o retrato anterior e o histórico completo de retratos. Reabrir a mesma base não duplica o histórico, só uma mudança real nos dados gera um novo retrato. Administradores podem limpar esse histórico pelo próprio painel.
 
@@ -55,6 +55,12 @@ O card "Tarefas de complementação" no menu lateral importa o relatório de tar
 A tabela de "A Classificar" não mostra mais analista, essa pendência é por falta de acesso à inicial, não erro de analista. Em vez disso mostra se já existe uma tarefa "Complementar Cadastro" aberta para aquela pasta e o prazo de atendimento (vindo da coluna "Prazo" do relatório de tarefas), que é o prazo de complementação que o escritório abre quando disponibiliza a inicial.
 
 O sistema também guarda, no navegador, quais pastas tinham tarefa complementar aberta na última importação da planilha de tarefas. Se numa importação seguinte essa tarefa não aparecer mais aberta, mas a pasta continuar em "A Classificar" (causa raiz ou produto ainda vazios), o status passa a mostrar **"Inicial disponibilizada incompleta"** em vez de simplesmente "Pendente", sinalizando que o escritório encerrou a tarefa sem realmente completar o cadastro.
+
+## Monitoramento de mudança de causa raiz
+
+Nova seção "Mudança de Causa Raiz", em "Monitoramento" (separada de "Erros de Classificação" de propósito: isso não é pendência de erro de cadastro, é controle de mudança de glossário). A cada importação da base de processos, o sistema compara a causa raiz atual de cada pasta com a última causa raiz conhecida (guardada no navegador). Casos em "A Classificar" nunca entram nessa comparação. Se uma pasta já classificada mudar de causa raiz entre duas importações (ex.: estava "Alegação de fraude" e passou a "Venda enganosa"), aparece um alerta aqui.
+
+O alerta não é "corrigido", é **verificado**: quem revisar confirma que a mudança está correta (ou corrige o cadastro por fora) e marca como verificado, o que remove aquela mudança específica da contagem de pendências. Se a mesma pasta mudar de causa raiz de novo depois de verificada, um novo alerta é gerado.
 
 ## Regras de direcionamento por advogado
 
