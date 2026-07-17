@@ -24,9 +24,11 @@ Este repositório contém dados reais de processos e de analistas embutidos no a
 
 O sistema exige login antes de mostrar qualquer parte do dashboard: ao abrir o link, aparece uma tela cheia pedindo usuário e senha. Usuário padrão inicial: `admin` / `admin123`, exibido na própria tela enquanto não for alterado. Troque a senha assim que possível pelo painel "Administração" (visível só para administradores após o login).
 
-No painel de Administração é possível criar novos usuários com papel de administrador (acesso total) ou usuário comum (visão limitada às seções escolhidas na criação).
+No painel de Administração é possível criar novos usuários com papel de administrador (acesso total) ou usuário comum (visão limitada às seções escolhidas na criação, e sem permissão de importar, exportar ou marcar/verificar nada, só visualizar).
 
 Esse controle é client-side: usuários, senhas, sessão e permissões ficam salvos no navegador (`localStorage`/`sessionStorage`), sem servidor nem banco de dados. A tela de login evita que alguém sem credenciais veja o dashboard casualmente, mas não é uma barreira de segurança real, os dados de qualquer forma trafegam junto com a página, e alguém com conhecimento técnico pode inspecionar o código-fonte da página e ver a lista de usuários e senhas ou contornar as restrições. Para proteção efetiva, o controle de acesso à própria URL do site (repositório privado, Deployment Protection na Vercel) continua sendo o que importa.
+
+**Limitação importante**: como tudo isso fica salvo no navegador de cada pessoa, e não em um servidor central, usuários criados no navegador de um administrador não existem no navegador de outra pessoa, e dados importados (base de processos, produtividade, tarefas) também não são compartilhados entre dispositivos/navegadores diferentes. Cada pessoa que abre o link parte do usuário padrão (`admin`/`admin123`) e sem nenhuma base importada, até que alguém importe ou crie usuários naquele mesmo navegador. Ter vários usuários reais, em dispositivos diferentes, vendo os mesmos dados atualizados exige um backend (servidor + banco de dados), que este projeto não tem hoje.
 
 A tela de login tem a opção "Lembrar-me": quando marcada, a sessão fica salva entre reinícios do navegador (`localStorage`); quando desmarcada, encerra ao fechar a aba (`sessionStorage`). O link "Esqueceu a senha?" não redefine nada automaticamente (não há e-mail nem backend), só orienta a procurar um administrador para trocar a senha pelo painel.
 

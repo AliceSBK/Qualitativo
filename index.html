@@ -213,6 +213,16 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
 .theme-toggle:hover{background:rgba(255,255,255,.2)}
 .theme-toggle-mini{position:static;background:var(--s2);border-color:var(--border);color:var(--t2)}
 .theme-toggle-mini:hover{background:var(--s3)!important}
+
+/* ── PERFIL SOMENTE VISUALIZAÇÃO ── */
+/* Usuário comum só visualiza: sem import, export, marcação em lote,
+   seleção ou verificação. Isso é reforço de interface, não segurança
+   real (ver README) — o objetivo é evitar cliques acidentais que
+   alterem dados, não impedir alguém com acesso ao código do navegador. */
+body.role-readonly .admin-only{display:none!important}
+body.role-readonly .cb-col{display:none!important}
+body.role-readonly .card-cb{display:none!important}
+body.role-readonly .sel-bar{display:none!important}
 .theme-toggle svg{width:13px;height:13px}
 .auth-card{position:relative;z-index:1;background:var(--glass);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--glass-border);border-radius:14px;padding:36px 34px;width:380px;max-width:90vw;box-shadow:0 20px 48px rgba(1,40,36,.28);text-align:left}
 .auth-logo{height:40px;display:block;margin:0 auto 20px}
@@ -287,7 +297,7 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
     <p>Somente <strong style="color:var(--teal2)">CIVE · Em Andamento</strong> · 2026<br><span style="color:var(--t3);font-size:9px">Base: 16/07/2026</span></p>
   </div>
 
-  <div class="sb-uploads">
+  <div class="sb-uploads admin-only">
     <div class="up-blk">
       <div class="up-tag">Base de processos</div>
       <label class="up-lbl" for="upf-base">
@@ -476,11 +486,11 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <span class="tb-pg" id="tb-pg">Dashboard</span>
     </div>
     <div class="tb-r">
-      <button class="btn" onclick="exportCorrigidos()">
+      <button class="btn admin-only" onclick="exportCorrigidos()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Exportar corrigidos
       </button>
-      <button class="btn hi" onclick="exportAll()">
+      <button class="btn hi admin-only" onclick="exportAll()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Exportar erros
       </button>
@@ -630,11 +640,11 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>A Classificar — pendência de inicial</h2>
       <div class="sh-r">
         <span class="cpill p-y" id="c-ac">—</span>
-        <button class="btn" onclick="openBulk('classificar')">
+        <button class="btn admin-only" onclick="openBulk('classificar')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar corrigidos em lote
         </button>
-        <button class="btn hi" onclick="exportCat('classificar')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('classificar')">Exportar CSV</button>
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:11px">
@@ -695,11 +705,11 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Campos Vazios</h2>
       <div class="sh-r">
         <span class="cpill p-d" id="c-vz">—</span>
-        <button class="btn" onclick="openBulk('vazios')">
+        <button class="btn admin-only" onclick="openBulk('vazios')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('vazios')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('vazios')">Exportar CSV</button>
       </div>
     </div>
     <div class="tw">
@@ -736,11 +746,11 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Divergências de Órgão — CNJ vs Cadastrado</h2>
       <div class="sh-r">
         <span class="cpill p-r" id="c-og">—</span>
-        <button class="btn" onclick="openBulk('orgao')">
+        <button class="btn admin-only" onclick="openBulk('orgao')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('orgao')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('orgao')">Exportar CSV</button>
       </div>
     </div>
     <div style="background:var(--blu2);border:1px solid rgba(27,111,168,.2);border-radius:var(--r2);padding:7px 11px;font-size:11px;color:var(--blue);margin-bottom:10px;line-height:1.5">
@@ -782,11 +792,11 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Escritórios incorretos por analista interno</h2>
       <div class="sh-r">
         <span class="cpill p-r" id="c-esc">—</span>
-        <button class="btn" onclick="openBulk('escritorio')">
+        <button class="btn admin-only" onclick="openBulk('escritorio')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('escritorio')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('escritorio')">Exportar CSV</button>
       </div>
     </div>
     <div class="tw">
@@ -825,15 +835,15 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Estratégico — Bancoob</h2>
       <div class="sh-r">
         <span class="cpill p-r" id="c-bb">—</span>
-        <button class="btn" onclick="markAllCardsVisible('bancoob','cg-bancoob')" style="gap:5px">
+        <button class="btn admin-only" onclick="markAllCardsVisible('bancoob','cg-bancoob')" style="gap:5px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar visíveis
         </button>
-        <button class="btn" onclick="openBulk('bancoob')">
+        <button class="btn admin-only" onclick="openBulk('bancoob')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('bancoob')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('bancoob')">Exportar CSV</button>
       </div>
     </div>
     <div class="cg" id="cg-bancoob"></div>
@@ -845,15 +855,15 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Estratégico — Cessão de Crédito</h2>
       <div class="sh-r">
         <span class="cpill p-r" id="c-cs">—</span>
-        <button class="btn" onclick="markAllCardsVisible('cessao','cg-cessao')" style="gap:5px">
+        <button class="btn admin-only" onclick="markAllCardsVisible('cessao','cg-cessao')" style="gap:5px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar visíveis
         </button>
-        <button class="btn" onclick="openBulk('cessao')">
+        <button class="btn admin-only" onclick="openBulk('cessao')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('cessao')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('cessao')">Exportar CSV</button>
       </div>
     </div>
     <div class="cg" id="cg-cessao"></div>
@@ -865,15 +875,15 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Superendividamento acima de R$ 200k</h2>
       <div class="sh-r">
         <span class="cpill p-r" id="c-su">—</span>
-        <button class="btn" onclick="markAllCardsVisible('super200k','cg-super200k')" style="gap:5px">
+        <button class="btn admin-only" onclick="markAllCardsVisible('super200k','cg-super200k')" style="gap:5px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar visíveis
         </button>
-        <button class="btn" onclick="openBulk('super200k')">
+        <button class="btn admin-only" onclick="openBulk('super200k')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('super200k')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('super200k')">Exportar CSV</button>
       </div>
     </div>
     <div class="cg" id="cg-super200k"></div>
@@ -885,15 +895,15 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Estratégico — Valor acima de R$ 200k</h2>
       <div class="sh-r">
         <span class="cpill p-r" id="c-et">—</span>
-        <button class="btn" onclick="markAllCardsVisible('estrat200k','cg-estrat200k')" style="gap:5px">
+        <button class="btn admin-only" onclick="markAllCardsVisible('estrat200k','cg-estrat200k')" style="gap:5px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar visíveis
         </button>
-        <button class="btn" onclick="openBulk('estrat200k')">
+        <button class="btn admin-only" onclick="openBulk('estrat200k')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('estrat200k')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('estrat200k')">Exportar CSV</button>
       </div>
     </div>
     <div class="cg" id="cg-estrat200k"></div>
@@ -905,11 +915,11 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>MBA Advogados — cadastros após 04/07/2026 (escritório encerrado)</h2>
       <div class="sh-r">
         <span class="cpill p-r" id="c-mba">—</span>
-        <button class="btn" onclick="openBulk('mba')">
+        <button class="btn admin-only" onclick="openBulk('mba')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('mba')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('mba')">Exportar CSV</button>
       </div>
     </div>
     <div style="background:var(--red2);border:1px solid rgba(194,59,50,.25);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--red);margin-bottom:11px;line-height:1.5">
@@ -947,11 +957,11 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Venda Enganosa — produto incorreto (deve ser Cartão Consignado)</h2>
       <div class="sh-r">
         <span class="cpill p-r" id="c-ve">—</span>
-        <button class="btn" onclick="openBulk('vendaenganosa')">
+        <button class="btn admin-only" onclick="openBulk('vendaenganosa')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('vendaenganosa')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('vendaenganosa')">Exportar CSV</button>
       </div>
     </div>
     <div class="tw">
@@ -991,11 +1001,11 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Marco Antonio Peixoto — Exibição/Revisão de Juros a partir 04/07/2026</h2>
       <div class="sh-r">
         <span class="cpill p-r" id="c-mrc">—</span>
-        <button class="btn" onclick="openBulk('marco')">
+        <button class="btn admin-only" onclick="openBulk('marco')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('marco')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('marco')">Exportar CSV</button>
       </div>
     </div>
     <div style="background:var(--blu2);border:1px solid rgba(27,111,168,.2);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:11px;line-height:1.5">
@@ -1033,11 +1043,11 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Cleyton da Silva Barbosa — Direcionamento a partir de 15/07/2026</h2>
       <div class="sh-r">
         <span class="cpill p-r" id="c-cly">—</span>
-        <button class="btn" onclick="openBulk('cleyton')">
+        <button class="btn admin-only" onclick="openBulk('cleyton')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           Marcar em lote
         </button>
-        <button class="btn hi" onclick="exportCat('cleyton')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('cleyton')">Exportar CSV</button>
       </div>
     </div>
     <div style="background:var(--blu2);border:1px solid rgba(27,111,168,.2);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:11px;line-height:1.5">
@@ -1075,7 +1085,7 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
       <h2>Mudança de Causa Raiz — Monitoramento e Controle</h2>
       <div class="sh-r">
         <span class="cpill p-d" id="c-cr">—</span>
-        <button class="btn hi" onclick="exportCat('causaraiz')">Exportar CSV</button>
+        <button class="btn hi admin-only" onclick="exportCat('causaraiz')">Exportar CSV</button>
       </div>
     </div>
     <div style="background:var(--blu2);border:1px solid rgba(27,111,168,.2);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:11px;line-height:1.5">
@@ -1373,6 +1383,7 @@ function refreshAuthUI(){
 
 function applyViewRestrictions(s){
   const restricted = !!s && s.role==='usuario';
+  document.body.classList.toggle('role-readonly', restricted);
   document.querySelectorAll('.ni').forEach(ni=>{
     const m=(ni.getAttribute('onclick')||'').match(/^go\('([^']+)'/);
     if(!m) return;
@@ -2383,7 +2394,7 @@ function renderCausaAlerts(){
   document.getElementById('cr-body').innerHTML=sl.map(a=>{
     const statusHtml = a.isVerified ? '<span class="pill p-g">Verificado</span>' : '<span class="pill p-o">Pendente verificação</span>';
     const actionHtml = a.isVerified ? '<span style="color:var(--t3);font-size:10px">—</span>'
-      : `<button class="btn" style="padding:2px 8px;font-size:10px" onclick="verifyCausaAlert('${a.pasta}','${String(a.causa_atual).replace(/'/g,"\\'")}')">Marcar verificado</button>`;
+      : `<button class="btn admin-only" style="padding:2px 8px;font-size:10px" onclick="verifyCausaAlert('${a.pasta}','${String(a.causa_atual).replace(/'/g,"\\'")}')">Marcar verificado</button>`;
     return `<tr>
       <td class="mo">${a.pasta}</td><td class="mo">${a.processo}</td>
       <td style="color:var(--t3)">${a.causa_anterior}</td>
