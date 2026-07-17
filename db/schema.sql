@@ -1,4 +1,4 @@
--- Qualidade de Cadastro — schema do backend compartilhado.
+-- Qualidade de Cadastro: schema do backend compartilhado.
 -- Roda em Postgres (Vercel Postgres / Neon em produção, Postgres local em dev).
 -- Aplique com: psql "$POSTGRES_URL" -f db/schema.sql
 

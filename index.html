@@ -1176,7 +1176,7 @@ function setStoredToken(token, persist){
 }
 function sessionPersisted(){ return localStorage.getItem('qc_token')!=null; }
 
-const CORR = new Set(); // keys: pasta|cat — populado no login via GET /api/corrections
+const CORR = new Set(); // keys: pasta|cat, populado no login via GET /api/corrections
 let PROD_MAP = {};      // proc_norm -> analista (from produtividade upload; não compartilhado, só a base já traz o analista)
 let TASK_MAP = {};      // pasta/processo -> {prazo:Date|null} (tarefas "Complementar Cadastro" abertas)
 let TASK_INCOMPLETE = new Set(); // pastas com tarefa complementar que fechou mas continuam A Classificar
@@ -2235,7 +2235,7 @@ function importProd(inp){
 // de pasta reconhecível no título não podem ser persistidas (mantém-se a
 // que tiver o menor prazo por pasta, igual ao comportamento anterior). A
 // comparação com o retrato anterior (tarefa incompleta) é feita no
-// servidor, a partir de task_state.open_pastas — ver /api/tasks.
+// servidor, a partir de task_state.open_pastas (ver /api/tasks).
 function importTasks(inp){
   const f=inp.files[0]; if(!f) return;
   const h=document.getElementById('hint-tasks');

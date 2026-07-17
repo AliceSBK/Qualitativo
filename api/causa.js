@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
       if (!Array.isArray(rows)) return res.status(400).json({ error: 'Lista inválida.' });
       try {
         // Carrega histórico e verificados de uma vez (evita 1 consulta por
-        // pasta — a base tem dezenas de milhares de linhas).
+        // pasta, já que a base tem dezenas de milhares de linhas).
         const [histR, verifiedR] = await Promise.all([
           query('SELECT pasta, causa FROM causa_hist'),
           query('SELECT pasta, causa FROM causa_verified'),
