@@ -38,8 +38,10 @@ A seção "Acompanhamento" guarda um retrato (snapshot) do resumo da base a cada
 
 ## Identidade visual
 
-O layout segue a paleta e a tipografia do SBK Brand Book 2026 (verde escuro como cor dominante, fonte Plus Jakarta Sans com fallback Calibri). O dashboard em si usa o par de contraste "verde escuro sobre off-white/branco"; a tela de login usa o par inverso, "branco sobre verde escuro", com um fundo em gradiente verde e uma animação leve de rede de pontos em canvas.
+O layout segue a paleta e a tipografia do SBK Brand Book 2026 (verde escuro como cor dominante, fonte Plus Jakarta Sans com fallback Calibri), no par de contraste "branco sobre verde escuro": o fundo de toda a aplicação, não só da tela de login, é um gradiente verde com uma animação leve de rede de pontos em canvas, fixa e contínua atrás de tudo.
 
-Há alternância entre tema claro e escuro (botão no topo da tela de login e no rodapé do menu lateral), com a preferência salva no navegador. O tema escuro usa os tons secundários mais profundos do Brand Book (verde profundo, ciano profundo) como superfícies, mantendo texto claro sobre fundo escuro.
+Sidebar, topo, KPIs, cards e tabelas usam superfícies translúcidas com efeito de vidro (`backdrop-filter: blur`), deixando o fundo animado visível através deles e nos espaços entre os cards, mantendo o texto legível por cima.
+
+Há alternância entre tema claro e escuro, com botão no topo da tela de login, no topo do dashboard (barra superior) e no rodapé do menu lateral, com a preferência salva no navegador. O tema escuro usa os tons secundários mais profundos do Brand Book (verde profundo, ciano profundo) como superfícies, mantendo texto claro sobre fundo escuro.
 
 A marca "SBK" no topo do menu e na tela de login é um texto estilizado temporário, criado a partir de uma captura de tela de baixa resolução; deve ser substituído por um arquivo de logo oficial em SVG ou PNG em alta resolução assim que disponível.

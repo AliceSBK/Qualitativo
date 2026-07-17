@@ -24,6 +24,7 @@
   --text:#023631;--t2:#4A545E;--t3:#707A83;--t4:#A3ABB2;
   --border:#DCE1E5;--bor2:#E8ECEF;
   --gate-bg-a:#0E6D63;--gate-bg-b:#023631;
+  --glass:rgba(255,255,255,.82);--glass2:rgba(255,255,255,.6);--glass-border:rgba(255,255,255,.5);
   --r:8px;--r2:5px;
   --ff:'Plus Jakarta Sans',Calibri,sans-serif;--fm:'Consolas','Courier New',monospace;
 }
@@ -38,11 +39,12 @@
   --text:#ECEFF3;--t2:#A9C2BE;--t3:#7FA39D;--t4:#4F6D68;
   --border:rgba(255,255,255,.10);--bor2:rgba(255,255,255,.06);
   --gate-bg-a:#093630;--gate-bg-b:#000806;
+  --glass:rgba(14,68,66,.78);--glass2:rgba(14,68,66,.55);--glass-border:rgba(255,255,255,.08);
 }
-body{background:var(--bg);color:var(--text);font-family:var(--ff);font-weight:300;font-size:13px;display:flex;min-height:100vh;transition:background .2s,color .2s}
+body{background:radial-gradient(circle at 22% 18%, var(--gate-bg-a), var(--gate-bg-b) 68%) fixed;color:var(--text);font-family:var(--ff);font-weight:300;font-size:13px;display:flex;min-height:100vh;transition:background .2s,color .2s}
 
 /* ── SIDEBAR ── */
-.sb{width:238px;min-width:238px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb{width:238px;min-width:238px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-right:1px solid var(--glass-border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:1}
 .sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
 .sb-logo h2{font-size:12px;font-weight:700;color:var(--teal2);text-transform:uppercase;letter-spacing:.06em}
 .sb-logo p{font-size:10px;color:var(--t3);margin-top:3px}
@@ -76,8 +78,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--ff);font-weight:30
 .sf b.g{color:var(--teal2)}.sf b.r{color:var(--red)}
 
 /* ── MAIN ── */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-.topbar{height:48px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative;z-index:1}
+.topbar{height:48px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;position:relative;z-index:1}
 .tb-l{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2)}
 .tb-sep{color:var(--t4)}.tb-pg{color:var(--text);font-weight:600}
 .tb-r{display:flex;align-items:center;gap:7px}
@@ -92,9 +94,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--ff);font-weight:30
 .panel{display:none}.panel.on{display:block}
 
 /* ── KPI ROW ── */
-.ov-insight{background:var(--teal3);border:1px solid rgba(42,124,121,.25);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--text);margin-bottom:14px;line-height:1.5}
+.ov-insight{background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--glass-border);box-shadow:0 8px 24px rgba(1,40,36,.06);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--text);margin-bottom:14px;line-height:1.5}
 .krow{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:14px}
-.kpi{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+.kpi{background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--glass-border);box-shadow:0 8px 24px rgba(1,40,36,.06);border-radius:var(--r);padding:13px 14px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
 .kpi:hover{background:var(--s2)}
 .ka{position:absolute;left:0;top:0;bottom:0;width:2px}
 .kl{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
@@ -110,7 +112,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--ff);font-weight:30
 /* ── CHARTS ── */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .g3{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:12px}
-.cc{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.cc{background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--glass-border);box-shadow:0 8px 24px rgba(1,40,36,.06);border-radius:var(--r);padding:14px}
 .cl{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
 .cl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .cl-row .cl{margin-bottom:0}
@@ -136,7 +138,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--ff);font-weight:30
 .ar-val{font-family:var(--fm);font-size:11px;font-weight:600;color:var(--red);text-align:right}
 
 /* ── TABLE ── */
-.tw{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.tw{background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--glass-border);box-shadow:0 8px 24px rgba(1,40,36,.06);border-radius:var(--r);overflow:hidden}
 .tbar{display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .tin{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:var(--r2);font-size:11px;font-family:var(--ff);outline:none;flex:1;min-width:150px;transition:.13s}
 .tin:focus{border-color:rgba(42,124,121,.5)}
@@ -182,7 +184,7 @@ tbody td{padding:6px 11px;vertical-align:middle}
 /* ── BULK MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:center;justify-content:center}
 .modal-overlay.on{display:flex}
-.modal{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);width:520px;max-width:95vw;padding:20px}
+.modal{background:var(--glass);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid var(--glass-border);box-shadow:0 20px 48px rgba(1,40,36,.18);border-radius:var(--r);width:520px;max-width:95vw;padding:20px}
 .modal h3{font-size:14px;font-weight:600;margin-bottom:6px}
 .modal p{font-size:11px;color:var(--t2);margin-bottom:12px;line-height:1.5}
 .modal textarea{width:100%;height:140px;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:var(--r2);font-size:11px;font-family:var(--fm);resize:vertical;outline:none;line-height:1.6}
@@ -200,16 +202,19 @@ input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--te
 .sel-bar{display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--teal3);border-bottom:1px solid rgba(42,124,121,.2);font-size:11px;color:var(--teal2)}
 .sel-bar.hidden{display:none}
 
+/* ── FUNDO ANIMADO (persistente em toda a aplicação) ── */
+#bg-network{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+
 /* ── AUTH GATE ── */
 .auth-gate{display:none}
 body.gate-active .sb, body.gate-active .main{display:none}
-body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 28% 22%, var(--gate-bg-a), var(--gate-bg-b) 65%)}
-#bg-network{position:absolute;inset:0;width:100%;height:100%}
+body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;overflow:hidden}
 .theme-toggle{position:absolute;top:20px;right:20px;z-index:2;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:6px 13px;font-size:11px;font-weight:500;color:#fff;cursor:pointer;font-family:var(--ff)}
 .theme-toggle:hover{background:rgba(255,255,255,.2)}
+.theme-toggle-mini{position:static;background:var(--s2);border-color:var(--border);color:var(--t2)}
 .theme-toggle-mini:hover{background:var(--s3)!important}
 .theme-toggle svg{width:13px;height:13px}
-.auth-card{position:relative;z-index:1;background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:36px 34px;width:380px;max-width:90vw;box-shadow:0 20px 48px rgba(1,40,36,.28);text-align:left}
+.auth-card{position:relative;z-index:1;background:var(--glass);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--glass-border);border-radius:14px;padding:36px 34px;width:380px;max-width:90vw;box-shadow:0 20px 48px rgba(1,40,36,.28);text-align:left}
 .auth-logo{height:40px;display:block;margin:0 auto 20px}
 .auth-card h1{font-size:20px;font-weight:600;color:var(--text);margin-bottom:6px}
 .auth-card p{font-size:11px;color:var(--t2);margin-bottom:20px;line-height:1.5}
@@ -236,8 +241,9 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
 </head>
 <body class="gate-active">
 
+<canvas id="bg-network"></canvas>
+
 <div class="auth-gate" id="auth-gate">
-  <canvas id="bg-network"></canvas>
   <button class="theme-toggle" onclick="toggleTheme()">
     <svg class="theme-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
     <span class="theme-toggle-label">Claro</span>
@@ -389,7 +395,7 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
     <div id="sf-auth" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--t2)">
       <span id="sf-auth-label">—</span>
       <div style="display:flex;align-items:center;gap:9px">
-        <button class="theme-toggle theme-toggle-mini" onclick="toggleTheme()" style="position:static;background:var(--s2);border-color:var(--border);color:var(--t2);padding:3px 8px;border-radius:12px">
+        <button class="theme-toggle theme-toggle-mini" onclick="toggleTheme()" style="padding:3px 8px;border-radius:12px">
           <svg class="theme-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
         </button>
         <a href="javascript:void(0)" id="sf-auth-action" onclick="doLogout()" style="color:var(--blue);font-weight:600;text-decoration:none">Sair</a>
@@ -457,6 +463,10 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
         Exportar erros
       </button>
       <div class="date-p" id="tb-dt">—</div>
+      <button class="theme-toggle theme-toggle-mini" onclick="toggleTheme()" title="Alternar tema claro/escuro">
+        <svg class="theme-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
+        <span class="theme-toggle-label">Claro</span>
+      </button>
     </div>
   </div>
 
@@ -1022,6 +1032,7 @@ const norm = p => String(p).trim().replace(/\s/g,'');
 function init(){
   document.getElementById('tb-dt').textContent = new Date().toLocaleDateString('pt-BR');
   applyTheme(getStoredTheme());
+  startNetworkBG();
   const s=getSession();
   if(s){ unlockApp(s); } else { showGate(); }
 }
@@ -1040,19 +1051,26 @@ function applyTheme(t){
 }
 function toggleTheme(){ applyTheme(getStoredTheme()==='dark' ? 'light' : 'dark'); }
 
-// ── FUNDO ANIMADO DA TELA DE LOGIN ──────────────
-let netRAF=null, netPoints=[], netResizeHandler=null;
+// ── FUNDO ANIMADO (persistente em toda a aplicação) ──
+let netRAF=null, netPoints=[], netStarted=false;
 function startNetworkBG(){
+  if(netStarted) return;
+  netStarted=true;
   const canvas=document.getElementById('bg-network');
   if(!canvas) return;
   const ctx=canvas.getContext('2d');
   function resize(){ canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight; }
   resize();
-  const count=Math.max(26,Math.min(60,Math.floor((canvas.width*canvas.height)/26000)));
-  netPoints=Array.from({length:count},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3}));
-  netResizeHandler=resize;
-  window.addEventListener('resize', netResizeHandler);
+  window.addEventListener('resize', resize);
+  function seed(){
+    const count=Math.max(30,Math.min(70,Math.floor((canvas.width*canvas.height)/24000)));
+    netPoints=Array.from({length:count},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22}));
+  }
+  seed();
+  window.addEventListener('resize', seed);
   (function step(){
+    netRAF=requestAnimationFrame(step);
+    if(document.hidden) return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     netPoints.forEach(p=>{
       p.x+=p.vx; p.y+=p.vy;
@@ -1062,20 +1080,13 @@ function startNetworkBG(){
     for(let i=0;i<netPoints.length;i++) for(let j=i+1;j<netPoints.length;j++){
       const dx=netPoints[i].x-netPoints[j].x, dy=netPoints[i].y-netPoints[j].y, d=Math.sqrt(dx*dx+dy*dy);
       if(d<130){
-        ctx.strokeStyle='rgba(255,255,255,'+(0.16*(1-d/130)).toFixed(3)+')';
+        ctx.strokeStyle='rgba(255,255,255,'+(0.14*(1-d/130)).toFixed(3)+')';
         ctx.lineWidth=1;
         ctx.beginPath(); ctx.moveTo(netPoints[i].x,netPoints[i].y); ctx.lineTo(netPoints[j].x,netPoints[j].y); ctx.stroke();
       }
     }
-    netPoints.forEach(p=>{ ctx.fillStyle='rgba(255,255,255,.4)'; ctx.beginPath(); ctx.arc(p.x,p.y,1.6,0,Math.PI*2); ctx.fill(); });
-    netRAF=requestAnimationFrame(step);
+    netPoints.forEach(p=>{ ctx.fillStyle='rgba(255,255,255,.38)'; ctx.beginPath(); ctx.arc(p.x,p.y,1.6,0,Math.PI*2); ctx.fill(); });
   })();
-}
-function stopNetworkBG(){
-  if(netRAF) cancelAnimationFrame(netRAF);
-  netRAF=null;
-  if(netResizeHandler) window.removeEventListener('resize', netResizeHandler);
-  netResizeHandler=null;
 }
 
 // ── SENHA VISÍVEL/OCULTA NA TELA DE LOGIN ───────
@@ -1127,10 +1138,8 @@ function showGate(){
   const stillDefault = getUsers().some(u=>u.username==='admin' && u.password==='admin123');
   hint.textContent = stillDefault ? 'Primeiro acesso: usuário admin, senha admin123. Depois de entrar, troque a senha no painel de Administração.' : '';
   hint.style.display = stillDefault ? 'block' : 'none';
-  startNetworkBG();
 }
 function unlockApp(s){
-  stopNetworkBG();
   document.body.classList.remove('gate-active');
   refreshAuthUI();
   render(D);
