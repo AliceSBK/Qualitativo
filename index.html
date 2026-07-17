@@ -637,6 +637,18 @@ body.gate-active .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;ali
         <button class="btn hi" onclick="exportCat('classificar')">Exportar CSV</button>
       </div>
     </div>
+    <div style="display:flex;gap:8px;margin-bottom:11px">
+      <div style="flex:1;background:var(--blu2);border:1px solid rgba(27,111,168,.2);border-radius:var(--r2);padding:8px 12px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--blue)">Com tarefa complementar aberta</div>
+        <div style="font-size:10px;color:var(--t2);margin-top:2px">Aguardando o escritório enviar a inicial</div>
+        <div style="font-family:var(--fm);font-size:20px;font-weight:600;color:var(--blue);margin-top:2px" id="ac-com-tarefa">—</div>
+      </div>
+      <div style="flex:1;background:var(--yel2);border:1px solid rgba(184,121,10,.2);border-radius:var(--r2);padding:8px 12px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--yellow)">Sem tarefa aberta</div>
+        <div style="font-size:10px;color:var(--t2);margin-top:2px">Ainda não pedimos complementação ao escritório</div>
+        <div style="font-family:var(--fm);font-size:20px;font-weight:600;color:var(--yellow);margin-top:2px" id="ac-sem-tarefa">—</div>
+      </div>
+    </div>
     <div class="tw">
       <div class="tbar">
         <input class="tin" id="ac-q" placeholder="Pasta ou processo..." oninput="renderAC()">
@@ -1132,7 +1144,21 @@ function loadCorr(){ try{ return new Set(JSON.parse(localStorage.getItem('qc_cor
 function saveCorr(){ localStorage.setItem('qc_corr', JSON.stringify([...CORR])); }
 const CORR = loadCorr(); // keys: pasta|cat
 let PROD_MAP = {};      // proc_norm -> analista (from produtividade upload)
-let TASK_MAP = {};      // pasta/processo -> {prazo:Date|null} (tarefas "Complementar Cadastro" abertas)
+// TASK_MAP fica salvo no navegador (localStorage), sobrevive a reimportações
+// da base de processos e a reinícios de sessão. Só é substituído quando uma
+// nova planilha de tarefas é importada.
+function loadTaskMap(){
+  try{
+    const raw=JSON.parse(localStorage.getItem('qc_task_map')||'{}');
+    const out={};
+    Object.entries(raw).forEach(([k,v])=>{ out[k]={prazo:v.prazo?new Date(v.prazo):null}; });
+    return out;
+  }catch(e){ return {}; }
+}
+function saveTaskMap(){ localStorage.setItem('qc_task_map', JSON.stringify(TASK_MAP)); }
+function loadTaskMeta(){ try{ return JSON.parse(localStorage.getItem('qc_task_meta')||'null'); }catch(e){ return null; } }
+function saveTaskMeta(meta){ localStorage.setItem('qc_task_meta', JSON.stringify(meta)); }
+let TASK_MAP = loadTaskMap();      // pasta/processo -> {prazo:Date|null} (tarefas "Complementar Cadastro" abertas)
 let TASK_INCOMPLETE = new Set(); // pastas com tarefa complementar que fechou mas continuam A Classificar
 function taskFor(r){ return TASK_MAP[r.pasta] || (r.processo && TASK_MAP[r.processo]) || null; }
 function getPrevTaskPastas(){ try{ return new Set(JSON.parse(localStorage.getItem('qc_prev_task_pastas')||'[]')); }catch(e){ return new Set(); } }
@@ -1311,7 +1337,17 @@ function showGate(){
 function unlockApp(s){
   document.body.classList.remove('gate-active');
   refreshAuthUI();
+  restoreTaskHint();
   render(D);
+}
+function restoreTaskHint(){
+  const h=document.getElementById('hint-tasks');
+  if(!h) return;
+  const meta=loadTaskMeta();
+  if(meta && Object.keys(TASK_MAP).length){
+    h.className='up-hint ok';
+    h.textContent=`${meta.fileName.slice(0,22)} · ${meta.n.toLocaleString('pt-BR')} tarefas complementares abertas (salvo)`;
+  }
 }
 function doLogin(){
   const user=document.getElementById('gate-user').value.trim();
@@ -1563,11 +1599,13 @@ function buildOverview(d){
   }catch(ex){ console.warn('Gráfico de categorias não carregou (Chart.js indisponível):', ex.message); }
 
   // Ranking por escritório (agregado, sem nome de pessoa).
-  // Inclui erros de roteamento (Escritórios) e pendências de A Classificar:
-  // disponibilizar a inicial é responsabilidade do escritório que detém a pasta.
+  // Inclui erros de roteamento (Escritórios) e pendências de A Classificar
+  // que ainda não têm tarefa de complementação aberta: disponibilizar a
+  // inicial é responsabilidade do escritório, mas só é uma pendência real
+  // dele enquanto ninguém ainda pediu/iniciou essa complementação.
   const counts={};
   (d.escritorio||[]).forEach(r=>{ const k=r.escritorio_atual||'Não informado'; counts[k]=(counts[k]||0)+1; });
-  (d.a_classificar||[]).forEach(r=>{ const k=r.escritorio_atual||'Não informado'; counts[k]=(counts[k]||0)+1; });
+  (d.a_classificar||[]).forEach(r=>{ if(taskFor(r)) return; const k=r.escritorio_atual||'Não informado'; counts[k]=(counts[k]||0)+1; });
   const rank = Object.entries(counts).map(([nome,total])=>({nome,total})).sort((a,b)=>b.total-a.total);
   const max = rank[0]?.total||1;
   const rankEl=document.getElementById('ov-rank');
@@ -1694,10 +1732,16 @@ function renderAC(){
   const mes = (document.getElementById('ac-mes')||{value:''}).value;
   const fld = (document.getElementById('ac-campo')||{value:''}).value;
   const trf = (document.getElementById('ac-tarefa')||{value:''}).value;
-  const data= (D.a_classificar||[]).filter(r=>{
+  const preTask = (D.a_classificar||[]).filter(r=>{
     if(q && !(r.pasta+r.processo).toLowerCase().includes(q)) return false;
     if(mes && r.dt_mes!==mes) return false;
     if(fld && !(r.campos||[]).includes(fld)) return false;
+    return true;
+  });
+  const comTarefa = preTask.filter(r=>taskFor(r)).length;
+  document.getElementById('ac-com-tarefa').textContent = comTarefa.toLocaleString('pt-BR');
+  document.getElementById('ac-sem-tarefa').textContent = (preTask.length-comTarefa).toLocaleString('pt-BR');
+  const data= preTask.filter(r=>{
     if(trf==='aberta' && !taskFor(r)) return false;
     if(trf==='sem' && taskFor(r)) return false;
     return true;
@@ -2152,8 +2196,10 @@ function importTasks(inp){
       const prevPastas=getPrevTaskPastas();
       TASK_INCOMPLETE=new Set([...prevPastas].filter(p=>!pastasAbertas.has(p)));
       savePrevTaskPastas(pastasAbertas);
+      saveTaskMap();
+      saveTaskMeta({fileName:f.name, n});
       h.className='up-hint ok'; h.textContent=`${f.name.slice(0,22)} · ${n.toLocaleString('pt-BR')} tarefas complementares abertas`;
-      renderAC();
+      renderAC(); buildOverview(D);
     }catch(ex){ h.className='up-hint err'; h.textContent='Erro: '+ex.message; }
   };
   r.readAsBinaryString(f);
