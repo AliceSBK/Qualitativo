@@ -453,6 +453,23 @@ body.role-readonly .sel-bar{display:none!important}
   </div>
 </div>
 
+<!-- MONTH DETAIL MODAL -->
+<div class="modal-overlay" id="monthdetail-overlay" onclick="if(event.target===this)closeMonthDetail()">
+  <div class="modal" style="width:860px;max-height:82vh;display:flex;flex-direction:column">
+    <h3 id="monthdetail-title">Detalhamento do mês</h3>
+    <p id="monthdetail-desc"></p>
+    <div style="overflow-y:auto;flex:1;min-height:0">
+      <div id="monthdetail-body"></div>
+    </div>
+    <div class="modal-foot">
+      <span class="modal-hint">Clique num registro para abrir a categoria correspondente.</span>
+      <div class="modal-btns">
+        <button class="btn" onclick="closeMonthDetail()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- USER FORM MODAL -->
 <div class="modal-overlay" id="userform-overlay" onclick="if(event.target===this)closeUserForm()">
   <div class="modal" style="width:460px">
@@ -543,16 +560,18 @@ body.role-readonly .sel-bar{display:none!important}
 
     <div class="g3">
       <div class="cc">
-        <div class="cl">Índice de erros por mês — Órgão + Venda Enganosa (produto errado)</div>
+        <div class="cl">Índice de erros por mês</div>
         <table class="mt">
           <thead><tr>
             <th>Mês</th><th>Cadastros</th><th>Erros</th>
             <th style="color:var(--red)">% Erro</th>
+            <th style="color:var(--yellow)">A Classificar</th>
             <th style="color:var(--teal2)">% Acerto</th>
             <th>Barra</th>
           </tr></thead>
           <tbody id="ov-mt"></tbody>
         </table>
+        <div style="font-size:10px;color:var(--t2);margin-top:6px">Erro = Órgão, Venda Enganosa, Escritórios, Bancoob, Cessão, Estratégico &gt;200k, Campos Vazios, MBA, Marco A. Peixoto e Cleyton S. Barbosa. "A Classificar" não é erro, é pendência por falta de acesso à inicial. Clique numa linha para ver o detalhe.</div>
       </div>
       <div class="cc">
         <div class="cl">Pendências por categoria</div>
@@ -1569,6 +1588,77 @@ function render(d){
 // ── OVERVIEW ──────────────────────────────────
 let CH_CAT = null;
 const CAT_LABELS = {a_classificar:'A Classificar',campos_vazios:'Campos Vazios',venda_enganosa:'Venda Enganosa',orgao:'Órgão (CNJ)',escritorio:'Escritórios',mba_pos_jul4:'MBA pós 04/07',marco_antonio:'Marco A. Peixoto',bancoob:'Bancoob',cessao:'Cessão de Crédito',super_200k:'Superendiv. >200k',estrategico_200k:'Estratégico >200k'};
+
+// Categorias que contam como erro de cadastro na tabela mensal. "A Classificar"
+// não entra aqui de propósito: é pendência por falta de acesso à inicial, não erro.
+const errDesc = r => (r.erros||[]).map(e=>`${e.campo}: "${e.atual}" → esperado "${e.esperado}"`).join('; ') || (r.motivo||'');
+const MONTHLY_ERROR_CATS = [
+  {key:'orgao', label:'Órgão (CNJ)', panel:'orgao', describe:r=>`Órgão: "${r.orgao_atual}" → esperado "${r.orgao_esperado}"`},
+  {key:'venda_enganosa', label:'Venda Enganosa', panel:'vendaenganosa', describe:r=>`Produto: "${r.produto_atual}" → esperado "${r.produto_esperado}"`},
+  {key:'escritorio', label:'Escritórios', panel:'escritorio', describe:r=>`Escritório: "${r.escritorio_atual}" → esperado "${r.escritorio_esperado}"`},
+  {key:'campos_vazios', label:'Campos Vazios', panel:'vazios', describe:r=>(r.campos||[]).join(', ')||'Campo vazio'},
+  {key:'bancoob', label:'Bancoob', panel:'bancoob', describe:errDesc},
+  {key:'cessao', label:'Cessão de Crédito', panel:'cessao', describe:errDesc},
+  {key:'super_200k', label:'Superendiv. >200k', panel:'super200k', describe:errDesc},
+  {key:'estrategico_200k', label:'Estratégico >200k', panel:'estrat200k', describe:errDesc},
+  {key:'mba_erros', label:'MBA pós 04/07', panel:'mba', describe:r=>`Escritório: MBA Advogados${r.motivo?` (${r.motivo})`:''}`},
+  {key:'marco_erros', label:'Marco A. Peixoto', panel:'marco', describe:r=>`Causa raiz: "${r.causa_raiz||''}", escritório atual: "${r.escritorio_atual||''}"`},
+  {key:'cleyton_erros', label:'Cleyton S. Barbosa', panel:'cleyton', describe:r=>`Causa raiz: "${r.causa_raiz||''}", escritório atual: "${r.escritorio_atual||''}"`},
+];
+
+function computeMonthlyStats(d){
+  const hasLiveVolume = d.monthly_volume && Object.keys(d.monthly_volume).length>0;
+  const volMap = hasLiveVolume ? d.monthly_volume : {};
+  const frozenMap = new Map((d.monthly_stats||[]).map(m=>[m.mes,m]));
+  const meses = new Set(Object.keys(volMap));
+  if(!hasLiveVolume) frozenMap.forEach((v,mes)=>meses.add(mes));
+  MONTHLY_ERROR_CATS.forEach(c=>(d[c.key]||[]).forEach(r=>{ if(r.dt_mes) meses.add(r.dt_mes); }));
+  (d.a_classificar||[]).forEach(r=>{ if(r.dt_mes) meses.add(r.dt_mes); });
+
+  return [...meses].sort().map(mes=>{
+    const erros = MONTHLY_ERROR_CATS.reduce((sum,c)=>sum+(d[c.key]||[]).filter(r=>r.dt_mes===mes).length,0);
+    const aClassificar = (d.a_classificar||[]).filter(r=>r.dt_mes===mes).length;
+    let volume = volMap[mes];
+    if(volume==null){ const f=frozenMap.get(mes); volume = f ? f.volume : (erros+aClassificar); }
+    const taxa_erro = volume ? erros/volume*100 : 0;
+    const taxa_acerto = volume ? Math.max(0,100-taxa_erro) : 0;
+    return {mes, label:fmtM(mes), volume, erros, a_classificar:aClassificar, taxa_erro, taxa_acerto};
+  });
+}
+
+function openMonthDetail(mes, label){
+  const rows = [];
+  MONTHLY_ERROR_CATS.forEach(c=>{
+    (D[c.key]||[]).filter(r=>r.dt_mes===mes).forEach(r=>{
+      rows.push({cat:c.label, panel:c.panel, pasta:r.pasta, processo:r.processo, detail:c.describe(r)});
+    });
+  });
+  const acRows = (D.a_classificar||[]).filter(r=>r.dt_mes===mes).map(r=>({pasta:r.pasta, processo:r.processo, detail:(r.campos||[]).join(', ')||'—'}));
+
+  document.getElementById('monthdetail-title').textContent = `Detalhamento de ${label}`;
+  document.getElementById('monthdetail-desc').textContent = `${rows.length.toLocaleString('pt-BR')} erro${rows.length!==1?'s':''} e ${acRows.length.toLocaleString('pt-BR')} caso${acRows.length!==1?'s':''} a classificar neste mês.`;
+
+  const errSection = rows.length ? `
+    <div style="margin:6px 0 4px;font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.04em">Erros (${rows.length})</div>
+    <table class="mt"><thead><tr><th style="text-align:left">Categoria</th><th style="text-align:left">Pasta</th><th style="text-align:left">Processo</th><th style="text-align:left">O que está errado</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr style="cursor:pointer" onclick="closeMonthDetail();go('${r.panel}')">
+      <td><span class="pill p-r">${r.cat}</span></td>
+      <td class="mo">${r.pasta}</td><td class="mo">${r.processo}</td>
+      <td style="color:var(--t2);font-size:11px">${r.detail}</td>
+    </tr>`).join('')}</tbody></table>` : '<div style="color:var(--t2);font-size:12px;margin:6px 0 14px">Nenhum erro neste mês.</div>';
+
+  const acSection = acRows.length ? `
+    <div style="margin:14px 0 4px;font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.04em">Casos a Classificar (${acRows.length}), não é erro</div>
+    <table class="mt"><thead><tr><th style="text-align:left">Pasta</th><th style="text-align:left">Processo</th><th style="text-align:left">Pendente</th></tr></thead>
+    <tbody>${acRows.map(r=>`<tr style="cursor:pointer" onclick="closeMonthDetail();go('classificar')">
+      <td class="mo">${r.pasta}</td><td class="mo">${r.processo}</td>
+      <td style="color:var(--t2);font-size:11px">${r.detail}</td>
+    </tr>`).join('')}</tbody></table>` : '';
+
+  document.getElementById('monthdetail-body').innerHTML = errSection + acSection;
+  document.getElementById('monthdetail-overlay').classList.add('on');
+}
+function closeMonthDetail(){ document.getElementById('monthdetail-overlay').classList.remove('on'); }
 function buildInsight(d){
   const s = d.summary||{};
   const tot = Object.values(s).reduce((a,b)=>a+b,0);
@@ -1591,15 +1681,17 @@ function buildInsight(d){
 function buildOverview(d){
   buildInsight(d);
 
-  // Monthly table
-  const ms = d.monthly_stats||[];
+  // Monthly table (calculado ao vivo a partir dos registros de cada categoria,
+  // não mais de um retrato congelado; ver computeMonthlyStats)
+  const ms = computeMonthlyStats(d);
   document.getElementById('ov-mt').innerHTML = ms.map(m=>{
     const c = m.taxa_erro>2?'var(--red)':m.taxa_erro>1?'var(--yellow)':'var(--teal2)';
-    return `<tr>
+    return `<tr style="cursor:pointer" onclick="openMonthDetail('${m.mes}','${m.label}')">
       <td>${m.label}</td>
       <td>${m.volume.toLocaleString('pt-BR')}</td>
       <td>${m.erros.toLocaleString('pt-BR')}</td>
       <td style="color:${c};font-weight:700">${m.taxa_erro.toFixed(1)}%</td>
+      <td style="color:var(--yellow)">${m.a_classificar.toLocaleString('pt-BR')}</td>
       <td style="color:var(--teal2);font-weight:700">${m.taxa_acerto.toFixed(1)}%</td>
       <td style="width:110px;min-width:80px">
         <div style="display:flex;gap:1px">
@@ -2197,6 +2289,12 @@ function importBase(inp){
       D.total_processos=base.length;
       D.a_classificar=newAC; D.venda_enganosa=newVE; D.mba_erros=newMBA; D.marco_erros=newMarco; D.cleyton_erros=newCley;
       D.summary.a_classificar=newAC.length; D.summary.venda_enganosa=newVE.length; D.summary.mba_pos_jul4=newMBA.length; D.summary.marco_antonio=newMarco.length;
+
+      // Volume de cadastros por mês (todos os processos ativos, não só os com erro),
+      // usado pela tabela "Índice de erros por mês" no Dashboard.
+      const monthlyVolume={};
+      base.forEach(r=>{ const mes=dtmes(r.__dt); monthlyVolume[mes]=(monthlyVolume[mes]||0)+1; });
+      D.monthly_volume=monthlyVolume;
 
       await apiFetch('/api/data', {method:'POST', body:JSON.stringify({data:D})});
       await addCorrections(resolvidosKeys);
