@@ -1357,6 +1357,19 @@ function showGate(){
   hint.textContent='';
   hint.style.display='none';
 }
+// Correções de qualidade da própria base de dados, aplicadas sempre que D é
+// carregado, independente de quando a importação de origem foi feita.
+function sanitizeData(d){
+  // Bancoob: quando o campo "Equipe" exporta como "Verificar 10", é um
+  // artefato do relatório de origem, a equipe já está correta ("Equipe
+  // Cível - Bancoob"), não é erro de cadastro.
+  if(Array.isArray(d.bancoob)){
+    d.bancoob = d.bancoob
+      .map(r=>({...r, erros:(r.erros||[]).filter(e=>!(e.campo==='Equipe' && e.atual==='Verificar 10'))}))
+      .filter(r=>r.erros.length>0);
+    if(d.summary) d.summary.bancoob = d.bancoob.length;
+  }
+}
 async function unlockApp(s){
   document.body.classList.remove('gate-active');
   try{
@@ -1365,6 +1378,7 @@ async function unlockApp(s){
       apiFetch('/api/corrections'),
     ]);
     D = dataBody.data;
+    sanitizeData(D);
     CORR.clear();
     (corrBody.keys||[]).forEach(k=>CORR.add(k));
     await Promise.all([refreshTasks(), refreshCausaAlerts(), refreshSnapshotHistory()]);
@@ -2295,6 +2309,7 @@ function importBase(inp){
       const monthlyVolume={};
       base.forEach(r=>{ const mes=dtmes(r.__dt); monthlyVolume[mes]=(monthlyVolume[mes]||0)+1; });
       D.monthly_volume=monthlyVolume;
+      sanitizeData(D);
 
       await apiFetch('/api/data', {method:'POST', body:JSON.stringify({data:D})});
       await addCorrections(resolvidosKeys);
