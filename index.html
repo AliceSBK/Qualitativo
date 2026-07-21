@@ -832,8 +832,8 @@ body.role-readonly .sel-bar{display:none!important}
         <table>
           <thead><tr>
             <th class="cb-col"><input type="checkbox" id="esc-chk-all" onchange="toggleAll('esc',this)"></th>
-            <th>Pasta</th><th>Processo</th><th>Analista Interno</th>
-            <th>Escritório Atual</th><th>Escritório Esperado</th><th>Status</th>
+            <th>Pasta</th><th>Processo</th><th>Escritório</th>
+            <th>Analista Atual</th><th>Analista Esperado</th><th>Status</th>
           </tr></thead>
           <tbody id="esc-body"></tbody>
         </table>
@@ -1649,7 +1649,7 @@ const errDesc = r => (r.erros||[]).map(e=>`${e.campo}: "${e.atual}" → esperado
 const MONTHLY_ERROR_CATS = [
   {key:'orgao', label:'Órgão (CNJ)', panel:'orgao', describe:r=>`Órgão: "${r.orgao_atual}" → esperado "${r.orgao_esperado}"`},
   {key:'venda_enganosa', label:'Venda Enganosa', panel:'vendaenganosa', describe:r=>`Produto: "${r.produto_atual}" → esperado "${r.produto_esperado}"`},
-  {key:'escritorio', label:'Escritórios', panel:'escritorio', describe:r=>`Escritório: "${r.escritorio_atual}" → esperado "${r.escritorio_esperado}"`},
+  {key:'escritorio', label:'Escritórios', panel:'escritorio', describe:r=>`${r.escritorio_atual}: analista atual "${r.analista_interno}" → deveria ser "${r.analista_esperado}"`},
   {key:'campos_vazios', label:'Campos Vazios', panel:'vazios', describe:r=>(r.campos||[]).join(', ')||'Campo vazio'},
   {key:'bancoob', label:'Bancoob', panel:'bancoob', describe:errDesc},
   {key:'cessao', label:'Cessão de Crédito', panel:'cessao', describe:errDesc},
@@ -2042,9 +2042,9 @@ function renderESC(){
     return `<tr>
       <td class="cb-col"><input type="checkbox" class="esc-cb" data-key="${k}" data-pasta="${r.pasta}" onchange="onCB('esc',this)"></td>
       <td class="mo">${r.pasta}</td><td class="mo">${r.processo}</td>
-      <td style="font-size:11px">${r.analista_interno}</td>
-      <td class="bad">${r.escritorio_atual}</td>
-      <td class="gd">${r.escritorio_esperado}</td>
+      <td style="font-size:11px">${r.escritorio_atual}</td>
+      <td class="bad">${r.analista_interno}</td>
+      <td class="gd">${r.analista_esperado}</td>
       <td>${statusPill(k)}</td>
     </tr>`;
   }).join('');
@@ -2275,6 +2275,22 @@ function orgaoEsperado(processo, estado){
   return null;
 }
 
+// ── ESCRITÓRIOS (analista interno responsável) ──
+// O escritório de cada caso não muda: cada escritório tem uma analista
+// interna responsável fixa, e o erro é a pasta estar com outra pessoa
+// atribuída, não o escritório errado. Mapa validado contra a base real:
+// cada escritório abaixo tem 98%+ de concentração numa única analista.
+// UV Advogados e E&S Advogados ficam de fora de propósito: têm mais de
+// uma analista com presença estável mês a mês, parece divisão legítima
+// de carteira, não erro, então incluir arriscaria falso positivo.
+const ESC_ANALISTA_ESPERADO = {
+  'DGS Advogados': 'IEDA DE SOUZA BARBOSA',
+  'FMD Advogados': 'MARIANA CASTEJON DA COSTA SIQUEIRA',
+  'Lima e Feigelson Advogados': 'GABRIELA SILVA OLIVEIRA',
+  'MBA Advogados': 'SAMUEL RIBEIRO DA SILVA',
+  'Renno Machado Advogados': 'GABRIELA SILVA OLIVEIRA',
+};
+
 // ── IMPORT ────────────────────────────────────
 // Recalcula, a partir da planilha bruta de processos, as categorias que
 // conseguimos derivar com confiança (verificadas manualmente contra a base
@@ -2333,12 +2349,19 @@ function importBase(inp){
       if(!base.length){ h.className='up-hint err'; h.textContent='Nenhum processo Em Andamento de 2026 (CIVE) encontrado'; return; }
 
       const cutoffMba=new Date(2026,6,4), cutoffMarco=new Date(2026,6,4), cutoffCley=new Date(2026,6,15);
-      const newAC=[], newVE=[], newMBA=[], newMarco=[], newCley=[], newOG=[];
+      const newAC=[], newVE=[], newMBA=[], newMarco=[], newCley=[], newOG=[], newESC=[];
       base.forEach(r=>{
         const causa=String(r.ds_causa_raiz||'').trim();
         const produto=String(r.ds_produto||'').trim();
         const escritorio=String(r.nm_escritorio||'').trim();
         const advogado=String(r.nm_advogado_do_autor||'').trim();
+        const analistaEsc=ESC_ANALISTA_ESPERADO[escritorio];
+        if(analistaEsc){
+          const analistaAtual=String(r.nm_analista_interno||'').trim();
+          if(analistaAtual!==analistaEsc){
+            newESC.push({pasta:r.nr_pasta, processo:r.nr_processo, dt_entrada:dtfmt(r.__dt), dt_mes:dtmes(r.__dt), escritorio_atual:escritorio, analista_interno:analistaAtual, analista_esperado:analistaEsc});
+          }
+        }
         const campos=[];
         if(!causa || causa==='A classificar') campos.push('Causa Raiz');
         if(!produto || produto==='A classificar') campos.push('Produto');
@@ -2375,12 +2398,13 @@ function importBase(inp){
         ...autoMarkResolved('mrc',D.marco_erros,newMarco),
         ...autoMarkResolved('cly',D.cleyton_erros,newCley),
         ...autoMarkResolved('og',D.orgao,newOG),
+        ...autoMarkResolved('esc',D.escritorio,newESC),
       ];
       resolvidosKeys.forEach(k=>CORR.add(k));
 
       D.total_processos=base.length;
-      D.a_classificar=newAC; D.venda_enganosa=newVE; D.mba_erros=newMBA; D.marco_erros=newMarco; D.cleyton_erros=newCley; D.orgao=newOG;
-      D.summary.a_classificar=newAC.length; D.summary.venda_enganosa=newVE.length; D.summary.mba_pos_jul4=newMBA.length; D.summary.marco_antonio=newMarco.length; D.summary.orgao=newOG.length;
+      D.a_classificar=newAC; D.venda_enganosa=newVE; D.mba_erros=newMBA; D.marco_erros=newMarco; D.cleyton_erros=newCley; D.orgao=newOG; D.escritorio=newESC;
+      D.summary.a_classificar=newAC.length; D.summary.venda_enganosa=newVE.length; D.summary.mba_pos_jul4=newMBA.length; D.summary.marco_antonio=newMarco.length; D.summary.orgao=newOG.length; D.summary.escritorio=newESC.length;
 
       // Volume de cadastros por mês (todos os processos ativos, não só os com erro),
       // usado pela tabela "Índice de erros por mês" no Dashboard.
@@ -2476,7 +2500,7 @@ function exportCat(cat){
     classificar:{data:D.a_classificar||[],hdr:'Pasta;Processo;Data;Campos;Tarefa Complementar;Prazo Atendimento;Status',fn:r=>{ const t=taskFor(r); const k=key(r,'ac'); const st=isCorr(k)?'Corrigido':(TASK_INCOMPLETE.has(r.pasta)?'Inicial disponibilizada incompleta':'Pendente'); return `"${r.pasta}";"${r.processo}";"${r.dt_entrada||''}";"${(r.campos||[]).join(', ')}";"${t?'Aberta':''}";"${(t&&t.prazo)?t.prazo.toLocaleDateString('pt-BR'):''}";"${st}"\n`; }},
     vazios:{data:D.campos_vazios||[],hdr:'Pasta;Processo;Data;Campos;Status',fn:r=>`"${r.pasta}";"${r.processo}";"${r.dt_entrada||''}";"${(r.campos||[]).join(', ')}";"${isCorr(key(r,'vz'))?'Corrigido':'Pendente'}"\n`},
     orgao:{data:D.orgao||[],hdr:'Pasta;Processo;Data;Analista;Órgão Atual;Órgão Esperado;Status',fn:r=>`"${r.pasta}";"${r.processo}";"${r.dt_entrada||''}";"${r.analista_impl||''}";"${r.orgao_atual}";"${r.orgao_esperado}";"${isCorr(key(r,'og'))?'Corrigido':'Pendente'}"\n`},
-    escritorio:{data:D.escritorio||[],hdr:'Pasta;Processo;Analista Interno;Escritório Atual;Esperado;Status',fn:r=>`"${r.pasta}";"${r.processo}";"${r.analista_interno}";"${r.escritorio_atual}";"${r.escritorio_esperado}";"${isCorr(key(r,'esc'))?'Corrigido':'Pendente'}"\n`},
+    escritorio:{data:D.escritorio||[],hdr:'Pasta;Processo;Escritório;Analista Atual;Analista Esperado;Status',fn:r=>`"${r.pasta}";"${r.processo}";"${r.escritorio_atual}";"${r.analista_interno}";"${r.analista_esperado}";"${isCorr(key(r,'esc'))?'Corrigido':'Pendente'}"\n`},
     bancoob:{data:D.bancoob||[],hdr:'Pasta;Processo;Campo;Atual;Esperado',fn:r=>(r.erros||[]).map(e=>`"${r.pasta}";"${r.processo}";"${e.campo}";"${e.atual}";"${e.esperado}"\n`).join('')},
     cessao:{data:D.cessao||[],hdr:'Pasta;Processo;Campo;Atual;Esperado',fn:r=>(r.erros||[]).map(e=>`"${r.pasta}";"${r.processo}";"${e.campo}";"${e.atual}";"${e.esperado}"\n`).join('')},
     super200k:{data:D.super_200k||[],hdr:'Pasta;Processo;Valor;Campo;Atual;Esperado',fn:r=>(r.erros||[]).map(e=>`"${r.pasta}";"${r.processo}";"${r.vl_causa}";"${e.campo}";"${e.atual}";"${e.esperado}"\n`).join('')},
