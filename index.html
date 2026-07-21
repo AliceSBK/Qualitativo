@@ -1222,9 +1222,16 @@ async function refreshCausaAlerts(){
   CAUSA_ALERTS = body.alerts||[];
   CAUSA_VERIFIED = new Set(body.verified||[]);
 }
+// Manda em lotes: a Vercel recusa (HTTP 413) qualquer corpo de requisição
+// acima de 4,5 MB, e a base inteira de processos ativos (não só os erros)
+// já passa disso com dezenas de milhares de linhas.
+const CAUSA_DETECT_BATCH = 15000;
 async function detectCausaChanges(base){
   const rows = base.map(r=>({pasta:r.nr_pasta, processo:r.nr_processo, causa:r.ds_causa_raiz}));
-  await apiFetch('/api/causa', {method:'POST', body:JSON.stringify({action:'detect', rows})});
+  for(let i=0; i<rows.length; i+=CAUSA_DETECT_BATCH){
+    const chunk = rows.slice(i, i+CAUSA_DETECT_BATCH);
+    await apiFetch('/api/causa', {method:'POST', body:JSON.stringify({action:'detect', rows:chunk})});
+  }
   await refreshCausaAlerts();
 }
 async function verifyCausaAlert(pasta, causaAtual){
