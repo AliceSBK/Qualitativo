@@ -1553,16 +1553,26 @@ function render(d){
   const taxaGeral = d.total_processos ? (tot/d.total_processos*100) : 0;
   document.getElementById('kv-taxa').textContent = taxaGeral.toFixed(1)+'%';
 
+  // Bancoob, Cessão e Estratégico (>200k) já saem da lista e da contagem
+  // assim que marcados como corrigidos: são painéis de card, então "sumir"
+  // da fila de pendências faz sentido. O índice mensal do Dashboard
+  // continua contando esses casos no mês em que ocorreram, independente
+  // de já terem sido corrigidos (ver computeMonthlyStats).
+  const bancoobPend = pendingCount(d.bancoob,'bancoob');
+  const cessaoPend = pendingCount(d.cessao,'cessao');
+  const super200kPend = pendingCount(d.super_200k,'super200k');
+  const estrat200kPend = pendingCount(d.estrategico_200k,'estrat200k');
+
   // Nav badges
   const nbMap = { 'nb-ac':s.a_classificar, 'nb-vz':s.campos_vazios, 'nb-og':s.orgao,
-    'nb-esc':s.escritorio, 'nb-bb':s.bancoob, 'nb-cs':s.cessao,
-    'nb-su':s.super_200k, 'nb-et':s.estrategico_200k };
+    'nb-esc':s.escritorio, 'nb-bb':bancoobPend, 'nb-cs':cessaoPend,
+    'nb-su':super200kPend, 'nb-et':estrat200kPend };
   Object.entries(nbMap).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.textContent=(v||0).toLocaleString('pt-BR'); });
 
   // Panel counts
   const pcMap = { 'c-ac':s.a_classificar, 'c-vz':s.campos_vazios, 'c-og':s.orgao,
-    'c-esc':s.escritorio, 'c-bb':s.bancoob, 'c-cs':s.cessao,
-    'c-su':s.super_200k, 'c-et':s.estrategico_200k };
+    'c-esc':s.escritorio, 'c-bb':bancoobPend, 'c-cs':cessaoPend,
+    'c-su':super200kPend, 'c-et':estrat200kPend };
   Object.entries(pcMap).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.textContent=((v||0).toLocaleString('pt-BR'))+' registros'; });
 
   // Footer
@@ -1862,6 +1872,7 @@ const isCorr = k => CORR.has(k);
 const statusPill = k => isCorr(k)
   ? '<span class="pill p-g">Corrigido</span>'
   : '<span class="pill p-r">Pendente</span>';
+const pendingCount = (arr, cat) => (arr||[]).filter(r=>!isCorr(key(r,cat))).length;
 
 async function addCorrections(keys){
   if(!keys || !keys.length) return;
@@ -2010,56 +2021,63 @@ function renderESC(){
 const pgESC=d=>{escP+=d;renderESC()};
 
 // ── CARDS ─────────────────────────────────────
+const CARD_CAT_META = {
+  bancoob:{nb:'nb-bb', c:'c-bb', field:'bancoob'},
+  cessao:{nb:'nb-cs', c:'c-cs', field:'cessao'},
+  super200k:{nb:'nb-su', c:'c-su', field:'super_200k'},
+  estrat200k:{nb:'nb-et', c:'c-et', field:'estrategico_200k'},
+};
+function refreshCardPanelCount(cat){
+  const meta = CARD_CAT_META[cat]; if(!meta) return;
+  const n = pendingCount(D[meta.field], cat);
+  const nb=document.getElementById(meta.nb); if(nb) nb.textContent=n.toLocaleString('pt-BR');
+  const c=document.getElementById(meta.c); if(c) c.textContent=n.toLocaleString('pt-BR')+' registros';
+}
+
 function onCardCB(cb){
   const k = cb.dataset.key;
-  if(cb.checked){ CORR.add(k); addCorrections([k]); } else { CORR.delete(k); removeCorrection(k); }
-  updateCorrCount();
-  // Update just this card's status pill without full re-render
-  const card = cb.closest('.card');
-  if(card){
-    const pill = card.querySelector('.pill');
-    if(pill){
-      pill.className = cb.checked ? 'pill p-g' : 'pill p-r';
-      pill.textContent = cb.checked ? 'Corrigido' : 'Pendente';
-    }
-    card.style.opacity = cb.checked ? '.55' : '';
-    card.style.borderColor = cb.checked ? 'rgba(42,124,121,.3)' : '';
+  const cat = cb.dataset.cat;
+  if(cb.checked){
+    // Corrigido: some da lista de pendências deste painel (mas continua
+    // contando no mês em que ocorreu no índice do Dashboard).
+    CORR.add(k); addCorrections([k]);
+    updateCorrCount();
+    const card = cb.closest('.card');
+    if(card) card.remove();
+  } else {
+    CORR.delete(k); removeCorrection(k);
+    updateCorrCount();
   }
+  refreshCardPanelCount(cat);
 }
 
 function markAllCardsVisible(cat, elId){
   const cbs = document.querySelectorAll(`#${elId} .card-cb`);
   const newKeys=[];
-  cbs.forEach(cb=>{
-    if(!cb.checked){
-      cb.checked=true;
-      CORR.add(cb.dataset.key);
-      newKeys.push(cb.dataset.key);
-      const card = cb.closest('.card');
-      if(card){
-        const pill = card.querySelector('.pill');
-        if(pill){ pill.className='pill p-g'; pill.textContent='Corrigido'; }
-        card.style.opacity='.55';
-        card.style.borderColor='rgba(42,124,121,.3)';
-      }
-    }
-  });
+  cbs.forEach(cb=>{ if(!cb.checked){ CORR.add(cb.dataset.key); newKeys.push(cb.dataset.key); } });
+  if(newKeys.length){
+    document.getElementById(elId).innerHTML = '<div style="color:var(--t2);font-size:12px;padding:20px">Nenhum erro nesta categoria.</div>';
+  }
   updateCorrCount();
   addCorrections(newKeys);
+  refreshCardPanelCount(cat);
 }
 
+// Cards mostram só o que ainda está pendente: uma vez marcado como
+// corrigido, o registro sai da lista e da contagem deste painel (mas
+// continua contando no mês em que ocorreu no índice do Dashboard).
 function renderCards(cat, data, elId, showVl=false){
   const el=document.getElementById(elId);
   if(!el) return;
+  data = (data||[]).filter(r=>!isCorr(key(r,cat)));
   if(!data.length){ el.innerHTML='<div style="color:var(--t2);font-size:12px;padding:20px">Nenhum erro nesta categoria.</div>'; return; }
   el.innerHTML=data.slice(0,200).map(r=>{
     const k=key(r,cat);
-    const corrido=isCorr(k);
-    return `<div class="card" style="${corrido?'opacity:.55;border-color:rgba(42,124,121,.3)':''}">
+    return `<div class="card">
       <div class="card-top">
         <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer" title="Marcar como corrigido">
           <input type="checkbox" class="card-cb" data-key="${k}" data-cat="${cat}"
-            onchange="onCardCB(this)" ${corrido?'checked':''} style="margin-top:3px;accent-color:var(--teal2);width:13px;height:13px;flex-shrink:0">
+            onchange="onCardCB(this)" style="margin-top:3px;accent-color:var(--teal2);width:13px;height:13px;flex-shrink:0">
           <div>
             <div class="card-pasta">${r.pasta}</div>
             <div class="card-proc">${r.processo}</div>
@@ -2067,7 +2085,7 @@ function renderCards(cat, data, elId, showVl=false){
           </div>
         </label>
         <div style="display:flex;gap:4px;flex-direction:column;align-items:flex-end">
-          ${statusPill(k)}
+          <span class="pill p-r">Pendente</span>
           ${showVl&&r.vl_causa?`<span class="card-vl">R$ ${parseFloat(r.vl_causa).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
         </div>
       </div>
@@ -2191,6 +2209,7 @@ function applyBulk(){
       const elIdMap={bancoob:'cg-bancoob',cessao:'cg-cessao',super200k:'cg-super200k',estrat200k:'cg-estrat200k'};
       const dataMap={bancoob:D.bancoob,cessao:D.cessao,super200k:D.super_200k,estrat200k:D.estrategico_200k};
       renderCards(catKey, dataMap[catKey]||[], elIdMap[catKey], ['super200k','estrat200k'].includes(catKey));
+      refreshCardPanelCount(catKey);
     }
   } else {
     res.textContent=`Nenhum registro encontrado. Verifique o número da pasta ou processo.`;
