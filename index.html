@@ -1376,6 +1376,24 @@ function sanitizeData(d){
       .filter(r=>r.erros.length>0);
     if(d.summary) d.summary.bancoob = d.bancoob.length;
   }
+
+  // Órgão: só cadastramos TJ ou JF, TRF (tribunal regional) nunca é um valor
+  // esperado válido, é o código da região federal usado por engano no lugar
+  // da Justiça Federal do estado certo. TRF06 cobre só Minas Gerais, então
+  // resolve direto; TRF03 cobre SP e MS, então só resolve quando o estado do
+  // órgão cadastrado (atual) é um desses dois, senão fica ambíguo e mantém.
+  const TRF_REGION_STATES = {'03':['SP','MS'], '06':['MG']};
+  if(Array.isArray(d.orgao)){
+    d.orgao = d.orgao.map(r=>{
+      const m = /^TRF0?(\d+)/.exec(r.orgao_esperado||'');
+      if(!m) return r;
+      const states = TRF_REGION_STATES[m[1].padStart(2,'0')];
+      if(!states) return r;
+      if(states.length===1) return {...r, orgao_esperado:'JF'+states[0]};
+      const ufAtual = (String(r.orgao_atual||'').match(/^(?:TJ|JF)([A-Z]{2})/)||[])[1];
+      return (ufAtual && states.includes(ufAtual)) ? {...r, orgao_esperado:'JF'+ufAtual} : r;
+    });
+  }
 }
 async function unlockApp(s){
   document.body.classList.remove('gate-active');
