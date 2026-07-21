@@ -2321,7 +2321,12 @@ function importBase(inp){
         if(causa==='Venda enganosa' && produto && produto!=='Cartão Consignado' && produto!=='A classificar'){
           newVE.push({pasta:r.nr_pasta, processo:r.nr_processo, dt_entrada:dtfmt(r.__dt), dt_mes:dtmes(r.__dt), analista_impl:'', causa_raiz:causa, produto_atual:produto, produto_esperado:'Cartão Consignado'});
         }
-        if(escritorio==='MBA Advogados' && r.__dt>=cutoffMba){
+        // Casos do advogado Cleyton da Silva Barbosa a partir de 15/07/2026
+        // são direcionados ao MBA Advogados de propósito (regra própria dele,
+        // ver newCley abaixo), não é erro de distribuição só porque bateu na
+        // regra geral do MBA também.
+        const roteadoPeloCleyton = advogado==='CLEYTON DA SILVA BARBOSA' && r.__dt>=cutoffCley;
+        if(escritorio==='MBA Advogados' && r.__dt>=cutoffMba && !roteadoPeloCleyton){
           newMBA.push({pasta:r.nr_pasta, processo:r.nr_processo, dt_entrada:dtfmt(r.__dt), dt_mes:dtmes(r.__dt), analista_impl:'', escritorio_atual:'MBA Advogados', motivo:causa});
         }
         if(advogado==='MARCO ANTONIO PEIXOTO' && ['Exibição de contrato','Revisão de Juros'].includes(causa) && r.__dt>=cutoffMarco && escritorio!=='Lima e Feigelson Advogados'){
