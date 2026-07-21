@@ -1539,47 +1539,63 @@ async function deleteUser(id){
 }
 
 // ── RENDER ────────────────────────────────────
-function render(d){
-  const s = d.summary||{};
-  const tot = Object.values(s).reduce((a,b)=>a+b,0);
-  recordSnapshot(d);
-  updateCorrCount();
+// Contagens de "pendente" (exclui o que já foi marcado corrigido) usadas
+// nos KPIs do Dashboard, nos badges do menu e nos cabeçalhos dos painéis.
+// O índice mensal de erros no Dashboard é a única exceção: continua
+// contando tudo no mês em que ocorreu, corrigido ou não (ver
+// computeMonthlyStats), como histórico de qualidade daquele mês.
+function pendingSummary(d){
+  return {
+    a_classificar: pendingCount(d.a_classificar,'ac'),
+    campos_vazios: pendingCount(d.campos_vazios,'vz'),
+    venda_enganosa: pendingCount(d.venda_enganosa,'ve'),
+    orgao: pendingCount(d.orgao,'og'),
+    escritorio: pendingCount(d.escritorio,'esc'),
+    mba_pos_jul4: pendingCount(d.mba_erros,'mba'),
+    marco_antonio: pendingCount(d.marco_erros,'mrc'),
+    bancoob: pendingCount(d.bancoob,'bancoob'),
+    cessao: pendingCount(d.cessao,'cessao'),
+    super_200k: pendingCount(d.super_200k,'super200k'),
+    estrategico_200k: pendingCount(d.estrategico_200k,'estrat200k'),
+  };
+}
+// Recalcula tudo que depende de "quanto ainda está pendente" (KPIs do
+// topo, badges do menu, cabeçalhos dos painéis, gráfico de categorias,
+// ranking de escritórios e o resumo do Dashboard), sem precisar refazer a
+// lista de cada painel. Chamado sempre que algo é marcado/desmarcado como
+// corrigido fora de uma importação completa.
+function refreshPendingCounts(){
+  const pend = pendingSummary(D);
+  const tot = Object.values(pend).reduce((a,b)=>a+b,0);
+  const clyPend = pendingCount(D.cleyton_erros,'cly');
 
-  // KPIs
-  anim('kv-tot', d.total_processos||0);
-  anim('kv-ac',  s.a_classificar||0);
-  anim('kv-og',  s.orgao||0);
+  anim('kv-ac',  pend.a_classificar);
+  anim('kv-og',  pend.orgao);
   anim('kv-totpend', tot);
-  const taxaGeral = d.total_processos ? (tot/d.total_processos*100) : 0;
+  const taxaGeral = D.total_processos ? (tot/D.total_processos*100) : 0;
   document.getElementById('kv-taxa').textContent = taxaGeral.toFixed(1)+'%';
 
-  // Bancoob, Cessão e Estratégico (>200k) já saem da lista e da contagem
-  // assim que marcados como corrigidos: são painéis de card, então "sumir"
-  // da fila de pendências faz sentido. O índice mensal do Dashboard
-  // continua contando esses casos no mês em que ocorreram, independente
-  // de já terem sido corrigidos (ver computeMonthlyStats).
-  const bancoobPend = pendingCount(d.bancoob,'bancoob');
-  const cessaoPend = pendingCount(d.cessao,'cessao');
-  const super200kPend = pendingCount(d.super_200k,'super200k');
-  const estrat200kPend = pendingCount(d.estrategico_200k,'estrat200k');
-
-  // Nav badges
-  const nbMap = { 'nb-ac':s.a_classificar, 'nb-vz':s.campos_vazios, 'nb-og':s.orgao,
-    'nb-esc':s.escritorio, 'nb-bb':bancoobPend, 'nb-cs':cessaoPend,
-    'nb-su':super200kPend, 'nb-et':estrat200kPend };
+  const nbMap = { 'nb-ac':pend.a_classificar, 'nb-vz':pend.campos_vazios, 'nb-og':pend.orgao,
+    'nb-esc':pend.escritorio, 'nb-bb':pend.bancoob, 'nb-cs':pend.cessao,
+    'nb-su':pend.super_200k, 'nb-et':pend.estrategico_200k,
+    'nb-ve':pend.venda_enganosa, 'nb-mba':pend.mba_pos_jul4, 'nb-mrc':pend.marco_antonio, 'nb-cly':clyPend };
   Object.entries(nbMap).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.textContent=(v||0).toLocaleString('pt-BR'); });
 
-  // Panel counts
-  const pcMap = { 'c-ac':s.a_classificar, 'c-vz':s.campos_vazios, 'c-og':s.orgao,
-    'c-esc':s.escritorio, 'c-bb':bancoobPend, 'c-cs':cessaoPend,
-    'c-su':super200kPend, 'c-et':estrat200kPend };
+  const pcMap = { 'c-ac':pend.a_classificar, 'c-vz':pend.campos_vazios, 'c-og':pend.orgao,
+    'c-esc':pend.escritorio, 'c-bb':pend.bancoob, 'c-cs':pend.cessao,
+    'c-su':pend.super_200k, 'c-et':pend.estrategico_200k,
+    'c-ve':pend.venda_enganosa, 'c-mba':pend.mba_pos_jul4, 'c-mrc':pend.marco_antonio, 'c-cly':clyPend };
   Object.entries(pcMap).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.textContent=((v||0).toLocaleString('pt-BR'))+' registros'; });
 
-  // Footer
-  document.getElementById('sf-tot').textContent = (d.total_processos||0).toLocaleString('pt-BR');
   document.getElementById('sf-err').textContent = tot.toLocaleString('pt-BR');
-
-  buildOverview(d);
+  buildOverview(D);
+}
+function render(d){
+  recordSnapshot(d);
+  updateCorrCount();
+  anim('kv-tot', d.total_processos||0);
+  document.getElementById('sf-tot').textContent = (d.total_processos||0).toLocaleString('pt-BR');
+  refreshPendingCounts();
   buildDropdowns(d);
   renderAC(); renderVZ(); renderOG(); renderESC();
   renderCards('bancoob', d.bancoob||[], 'cg-bancoob');
@@ -1588,22 +1604,11 @@ function render(d){
   renderCards('estrat200k', d.estrategico_200k||[], 'cg-estrat200k', true);
 
   // Venda Enganosa
-  const nbVe=document.getElementById('nb-ve'); if(nbVe) nbVe.textContent=(s.venda_enganosa||0).toLocaleString('pt-BR');
-  const cVe=document.getElementById('c-ve'); if(cVe) cVe.textContent=((s.venda_enganosa||0).toLocaleString('pt-BR'))+' registros';
   // Build ve analista dropdown
   const veAns=[...new Set((d.venda_enganosa||[]).map(r=>r.analista_impl).filter(Boolean))].sort();
   const veAnSel=document.getElementById('ve-an');
   if(veAnSel) veAnSel.innerHTML='<option value="">Todos os analistas</option>'+veAns.map(a=>`<option value="${a}">${a}</option>`).join('');
   renderVE();
-
-  // New panels
-  const nbMba=document.getElementById('nb-mba'); if(nbMba) nbMba.textContent=(s.mba_pos_jul4||0).toLocaleString('pt-BR');
-  const nbMrc=document.getElementById('nb-mrc'); if(nbMrc) nbMrc.textContent=(s.marco_antonio||0).toLocaleString('pt-BR');
-  const clyTot=(D.cleyton_erros||[]).length;
-  const nbCly=document.getElementById('nb-cly'); if(nbCly) nbCly.textContent=clyTot.toLocaleString('pt-BR');
-  const cMba=document.getElementById('c-mba'); if(cMba) cMba.textContent=((s.mba_pos_jul4||0).toLocaleString('pt-BR'))+' registros';
-  const cMrc=document.getElementById('c-mrc'); if(cMrc) cMrc.textContent=((s.marco_antonio||0).toLocaleString('pt-BR'))+' registros';
-  const cCly=document.getElementById('c-cly'); if(cCly) cCly.textContent=(clyTot.toLocaleString('pt-BR'))+' registros';
   renderMBA(); renderMRC(); renderCLY(); renderCausaAlerts();
 
   renderAcompanhamento();
@@ -1684,7 +1689,7 @@ function openMonthDetail(mes, label){
 }
 function closeMonthDetail(){ document.getElementById('monthdetail-overlay').classList.remove('on'); }
 function buildInsight(d){
-  const s = d.summary||{};
+  const s = pendingSummary(d);
   const tot = Object.values(s).reduce((a,b)=>a+b,0);
   const taxa = d.total_processos ? (tot/d.total_processos*100) : 0;
   let topCat=null, topVal=-1;
@@ -1726,10 +1731,10 @@ function buildOverview(d){
     </tr>`;
   }).join('');
 
-  // Category chart
-  const s = d.summary||{};
+  // Category chart (só o que ainda está pendente, igual aos KPIs)
+  const pend = pendingSummary(d);
   const cats  = ['A Classificar','Campos Vazios','Órgão','Venda Enganosa','Escritórios','Bancoob','Cessão','Super >200k','Estrat. >200k'];
-  const vals  = [s.a_classificar||0,s.campos_vazios||0,s.orgao||0,s.venda_enganosa||0,s.escritorio||0,s.bancoob||0,s.cessao||0,s.super_200k||0,s.estrategico_200k||0];
+  const vals  = [pend.a_classificar,pend.campos_vazios,pend.orgao,pend.venda_enganosa,pend.escritorio,pend.bancoob,pend.cessao,pend.super_200k,pend.estrategico_200k];
   const cols  = ['#B8790A','#707A83','#DB2F23','#C2600F','#DB2F23','#C2600F','#0E74D1','#7440C7','#C97A6B'];
   const G={color:'rgba(2,54,49,.07)'}, T={color:'#707A83',font:{size:9}};
   try{
@@ -1749,8 +1754,8 @@ function buildOverview(d){
   // inicial é responsabilidade do escritório, mas só é uma pendência real
   // dele enquanto ninguém ainda pediu/iniciou essa complementação.
   const counts={};
-  (d.escritorio||[]).forEach(r=>{ const k=r.escritorio_atual||'Não informado'; counts[k]=(counts[k]||0)+1; });
-  (d.a_classificar||[]).forEach(r=>{ if(taskFor(r)) return; const k=r.escritorio_atual||'Não informado'; counts[k]=(counts[k]||0)+1; });
+  (d.escritorio||[]).forEach(r=>{ if(isCorr(key(r,'esc'))) return; const k=r.escritorio_atual||'Não informado'; counts[k]=(counts[k]||0)+1; });
+  (d.a_classificar||[]).forEach(r=>{ if(isCorr(key(r,'ac'))||taskFor(r)) return; const k=r.escritorio_atual||'Não informado'; counts[k]=(counts[k]||0)+1; });
   const rank = Object.entries(counts).map(([nome,total])=>({nome,total})).sort((a,b)=>b.total-a.total);
   const max = rank[0]?.total||1;
   const rankEl=document.getElementById('ov-rank');
@@ -1779,12 +1784,15 @@ async function refreshSnapshotHistory(){
 }
 function getHistory(){ return SNAPSHOT_HISTORY; }
 async function recordSnapshot(d){
-  const s=d.summary||{};
-  const tot=Object.values(s).reduce((a,b)=>a+b,0);
-  const sig=JSON.stringify(s)+'|'+(d.total_processos||0);
+  // Acompanhamento rastreia a fila atual de pendências (o que ainda falta
+  // corrigir), por isso usa os totais pendentes, não os brutos: corrigir
+  // itens deve aparecer como progresso nesse histórico.
+  const pend=pendingSummary(d);
+  const tot=Object.values(pend).reduce((a,b)=>a+b,0);
+  const sig=JSON.stringify(pend)+'|'+(d.total_processos||0);
   const last=SNAPSHOT_HISTORY[SNAPSHOT_HISTORY.length-1];
   if(last && last.sig===sig) return;
-  const snapshot={ts:Date.now(), sig, total_processos:d.total_processos||0, tot, summary:{...s}};
+  const snapshot={ts:Date.now(), sig, total_processos:d.total_processos||0, tot, summary:{...pend}};
   try{
     const body = await apiFetch('/api/snapshots', {method:'POST', body:JSON.stringify({snapshot})});
     if(body.added){ SNAPSHOT_HISTORY.push(snapshot); if(SNAPSHOT_HISTORY.length>60) SNAPSHOT_HISTORY.shift(); }
@@ -1896,6 +1904,7 @@ function renderAC(){
   const fld = (document.getElementById('ac-campo')||{value:''}).value;
   const trf = (document.getElementById('ac-tarefa')||{value:''}).value;
   const preTask = (D.a_classificar||[]).filter(r=>{
+    if(isCorr(key(r,'ac'))) return false;
     if(q && !(r.pasta+r.processo).toLowerCase().includes(q)) return false;
     if(mes && r.dt_mes!==mes) return false;
     if(fld && !(r.campos||[]).includes(fld)) return false;
@@ -1917,9 +1926,7 @@ function renderAC(){
     const t=taskFor(r);
     const compHtml = t ? `<span class="cpill p-b">Aberta</span>` : `<span style="color:var(--t3)">—</span>`;
     const prazoHtml = (t && t.prazo) ? `<span style="font-family:var(--fm)">${t.prazo.toLocaleDateString('pt-BR')}</span>` : `<span style="color:var(--t3)">—</span>`;
-    const statusHtml = isCorr(k) ? statusPill(k)
-      : TASK_INCOMPLETE.has(r.pasta) ? '<span class="pill p-o">Inicial disponibilizada incompleta</span>'
-      : statusPill(k);
+    const statusHtml = TASK_INCOMPLETE.has(r.pasta) ? '<span class="pill p-o">Inicial disponibilizada incompleta</span>' : statusPill(k);
     return `<tr>
       <td class="cb-col"><input type="checkbox" class="ac-cb" data-key="${k}" data-pasta="${r.pasta}" onchange="onCB('ac',this)"></td>
       <td class="mo">${r.pasta}</td>
@@ -1940,7 +1947,7 @@ const pgAC=d=>{acP+=d;renderAC()};
 // ── TABLE: CAMPOS VAZIOS ──────────────────────
 function renderVZ(){
   const q=(document.getElementById('vz-q')||{value:''}).value.toLowerCase();
-  const data=(D.campos_vazios||[]).filter(r=>!q||(r.pasta+r.processo).toLowerCase().includes(q));
+  const data=(D.campos_vazios||[]).filter(r=>!isCorr(key(r,'vz')) && (!q||(r.pasta+r.processo).toLowerCase().includes(q)));
   const tot=data.length, pgs=Math.max(1,Math.ceil(tot/PER));
   vzP=Math.min(vzP,pgs-1);
   const sl=data.slice(vzP*PER,(vzP+1)*PER);
@@ -1966,6 +1973,7 @@ function renderOG(){
   const q =(document.getElementById('og-q')||{value:''}).value.toLowerCase();
   const an=(document.getElementById('og-an')||{value:''}).value;
   const data=(D.orgao||[]).filter(r=>{
+    if(isCorr(key(r,'og'))) return false;
     if(q&&!(r.pasta+r.processo+r.orgao_atual).toLowerCase().includes(q)) return false;
     if(an&&r.analista_impl!==an) return false;
     return true;
@@ -1996,6 +2004,7 @@ function renderESC(){
   const q =(document.getElementById('esc-q')||{value:''}).value.toLowerCase();
   const an=(document.getElementById('esc-an')||{value:''}).value;
   const data=(D.escritorio||[]).filter(r=>{
+    if(isCorr(key(r,'esc'))) return false;
     if(q&&!(r.pasta+r.processo+r.analista_interno+r.escritorio_atual).toLowerCase().includes(q)) return false;
     if(an&&r.analista_interno!==an) return false;
     return true;
@@ -2021,22 +2030,8 @@ function renderESC(){
 const pgESC=d=>{escP+=d;renderESC()};
 
 // ── CARDS ─────────────────────────────────────
-const CARD_CAT_META = {
-  bancoob:{nb:'nb-bb', c:'c-bb', field:'bancoob'},
-  cessao:{nb:'nb-cs', c:'c-cs', field:'cessao'},
-  super200k:{nb:'nb-su', c:'c-su', field:'super_200k'},
-  estrat200k:{nb:'nb-et', c:'c-et', field:'estrategico_200k'},
-};
-function refreshCardPanelCount(cat){
-  const meta = CARD_CAT_META[cat]; if(!meta) return;
-  const n = pendingCount(D[meta.field], cat);
-  const nb=document.getElementById(meta.nb); if(nb) nb.textContent=n.toLocaleString('pt-BR');
-  const c=document.getElementById(meta.c); if(c) c.textContent=n.toLocaleString('pt-BR')+' registros';
-}
-
 function onCardCB(cb){
   const k = cb.dataset.key;
-  const cat = cb.dataset.cat;
   if(cb.checked){
     // Corrigido: some da lista de pendências deste painel (mas continua
     // contando no mês em que ocorreu no índice do Dashboard).
@@ -2048,7 +2043,7 @@ function onCardCB(cb){
     CORR.delete(k); removeCorrection(k);
     updateCorrCount();
   }
-  refreshCardPanelCount(cat);
+  refreshPendingCounts();
 }
 
 function markAllCardsVisible(cat, elId){
@@ -2060,7 +2055,7 @@ function markAllCardsVisible(cat, elId){
   }
   updateCorrCount();
   addCorrections(newKeys);
-  refreshCardPanelCount(cat);
+  refreshPendingCounts();
 }
 
 // Cards mostram só o que ainda está pendente: uma vez marcado como
@@ -2144,6 +2139,7 @@ function markSelCorrigido(cat){
   else if(cat==='mba') renderMBA();
   else if(cat==='mrc') renderMRC();
   else if(cat==='cly') renderCLY();
+  refreshPendingCounts();
 }
 
 // ── BULK MODAL ────────────────────────────────
@@ -2209,8 +2205,8 @@ function applyBulk(){
       const elIdMap={bancoob:'cg-bancoob',cessao:'cg-cessao',super200k:'cg-super200k',estrat200k:'cg-estrat200k'};
       const dataMap={bancoob:D.bancoob,cessao:D.cessao,super200k:D.super_200k,estrat200k:D.estrategico_200k};
       renderCards(catKey, dataMap[catKey]||[], elIdMap[catKey], ['super200k','estrat200k'].includes(catKey));
-      refreshCardPanelCount(catKey);
     }
+    refreshPendingCounts();
   } else {
     res.textContent=`Nenhum registro encontrado. Verifique o número da pasta ou processo.`;
     res.className='modal-result err';
@@ -2466,6 +2462,7 @@ function renderVE(){
   const q=(document.getElementById('ve-q')||{value:''}).value.toLowerCase();
   const an=(document.getElementById('ve-an')||{value:''}).value;
   const data=(D.venda_enganosa||[]).filter(r=>{
+    if(isCorr(key(r,'ve'))) return false;
     if(q&&!(r.pasta+r.processo+r.produto_atual).toLowerCase().includes(q)) return false;
     if(an&&r.analista_impl!==an) return false;
     return true;
@@ -2494,7 +2491,7 @@ const pgVE=d=>{veP+=d;renderVE()};
 
 function renderMBA(){
   const q=(document.getElementById('mba-q')||{value:''}).value.toLowerCase();
-  const data=(D.mba_erros||[]).filter(r=>!q||(r.pasta+r.processo).toLowerCase().includes(q));
+  const data=(D.mba_erros||[]).filter(r=>!isCorr(key(r,'mba')) && (!q||(r.pasta+r.processo).toLowerCase().includes(q)));
   const tot=data.length,pgs=Math.max(1,Math.ceil(tot/PER));
   mbaP=Math.min(mbaP,pgs-1);
   const sl=data.slice(mbaP*PER,(mbaP+1)*PER);
@@ -2517,7 +2514,7 @@ const pgMBA=d=>{mbaP+=d;renderMBA()};
 
 function renderMRC(){
   const q=(document.getElementById('mrc-q')||{value:''}).value.toLowerCase();
-  const data=(D.marco_erros||[]).filter(r=>!q||(r.pasta+r.processo).toLowerCase().includes(q));
+  const data=(D.marco_erros||[]).filter(r=>!isCorr(key(r,'mrc')) && (!q||(r.pasta+r.processo).toLowerCase().includes(q)));
   const tot=data.length,pgs=Math.max(1,Math.ceil(tot/PER));
   mrcP=Math.min(mrcP,pgs-1);
   const sl=data.slice(mrcP*PER,(mrcP+1)*PER);
@@ -2541,7 +2538,7 @@ const pgMRC=d=>{mrcP+=d;renderMRC()};
 
 function renderCLY(){
   const q=(document.getElementById('cly-q')||{value:''}).value.toLowerCase();
-  const data=(D.cleyton_erros||[]).filter(r=>!q||(r.pasta+r.processo).toLowerCase().includes(q));
+  const data=(D.cleyton_erros||[]).filter(r=>!isCorr(key(r,'cly')) && (!q||(r.pasta+r.processo).toLowerCase().includes(q)));
   const tot=data.length,pgs=Math.max(1,Math.ceil(tot/PER));
   clyP=Math.min(clyP,pgs-1);
   const sl=data.slice(clyP*PER,(clyP+1)*PER);
