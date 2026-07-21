@@ -2057,14 +2057,15 @@ function renderCards(cat, data, elId, showVl=false){
     const corrido=isCorr(k);
     return `<div class="card" style="${corrido?'opacity:.55;border-color:rgba(42,124,121,.3)':''}">
       <div class="card-top">
-        <div style="display:flex;align-items:flex-start;gap:8px">
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer" title="Marcar como corrigido">
           <input type="checkbox" class="card-cb" data-key="${k}" data-cat="${cat}"
             onchange="onCardCB(this)" ${corrido?'checked':''} style="margin-top:3px;accent-color:var(--teal2);width:13px;height:13px;flex-shrink:0">
           <div>
             <div class="card-pasta">${r.pasta}</div>
             <div class="card-proc">${r.processo}</div>
+            <div style="font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">Marcar corrigido</div>
           </div>
-        </div>
+        </label>
         <div style="display:flex;gap:4px;flex-direction:column;align-items:flex-end">
           ${statusPill(k)}
           ${showVl&&r.vl_causa?`<span class="card-vl">R$ ${parseFloat(r.vl_causa).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
