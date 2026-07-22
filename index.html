@@ -481,6 +481,7 @@ body.role-readonly .sel-bar{display:none!important}
     <div class="modal-foot">
       <span class="modal-hint">Clique num registro para abrir a categoria correspondente.</span>
       <div class="modal-btns">
+        <button class="btn" onclick="exportOfficeDetail()">Exportar</button>
         <button class="btn" onclick="closeOfficeDetail()">Fechar</button>
       </div>
     </div>
@@ -1815,6 +1816,7 @@ function buildOverview(d){
   }
 }
 let RANK_CURRENT = [];
+let OFFICEDETAIL_CURRENT = {nome:'', escRows:[], acRows:[]};
 function openOfficeDetail(idx){
   const office = RANK_CURRENT[idx];
   if(!office) return;
@@ -1827,6 +1829,8 @@ function openOfficeDetail(idx){
   const acRows = (D.a_classificar||[])
     .filter(r=>(r.escritorio_atual||'Não informado')===nome && !isCorr(key(r,'ac')) && !taskFor(r))
     .map(r=>({pasta:r.pasta, processo:r.processo, detail:(r.campos||[]).join(', ')||'—'}));
+
+  OFFICEDETAIL_CURRENT = {nome, escRows, acRows};
 
   document.getElementById('officedetail-title').textContent = nome;
   document.getElementById('officedetail-desc').textContent = `${escRows.length.toLocaleString('pt-BR')} erro${escRows.length!==1?'s':''} de analista e ${acRows.length.toLocaleString('pt-BR')} caso${acRows.length!==1?'s':''} a classificar pendentes deste escritório.`;
@@ -2569,6 +2573,16 @@ function exportCat(cat){
   };
   const m=maps[cat]; if(!m) return;
   dl(m.hdr+'\n'+m.data.map(m.fn).join(''), cat+'_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+
+function exportOfficeDetail(){
+  const {nome, escRows, acRows} = OFFICEDETAIL_CURRENT;
+  if(!nome) return;
+  const esc=v=>String(v==null?'':v).replace(/"/g,'""');
+  let csv='Categoria;Pasta;Processo;Detalhe\n';
+  escRows.forEach(r=>{ csv+=`"Erro de Analista";"${esc(r.pasta)}";"${esc(r.processo)}";"${esc(r.detail)}"\n`; });
+  acRows.forEach(r=>{ csv+=`"A Classificar";"${esc(r.pasta)}";"${esc(r.processo)}";"${esc(r.detail)}"\n`; });
+  dl(csv, 'escritorio_'+nome.replace(/[^a-zA-Z0-9]+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv');
 }
 
 function exportCorrigidos(){
