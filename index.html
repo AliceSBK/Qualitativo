@@ -475,6 +475,23 @@ body.role-readonly .sel-bar{display:none!important}
   </div>
 </div>
 
+<!-- OFFICE DETAIL MODAL -->
+<div class="modal-overlay" id="officedetail-overlay" onclick="if(event.target===this)closeOfficeDetail()">
+  <div class="modal" style="width:860px;max-height:82vh;display:flex;flex-direction:column">
+    <h3 id="officedetail-title">Detalhamento do escritório</h3>
+    <p id="officedetail-desc"></p>
+    <div style="overflow-y:auto;flex:1;min-height:0">
+      <div id="officedetail-body"></div>
+    </div>
+    <div class="modal-foot">
+      <span class="modal-hint">Clique num registro para abrir a categoria correspondente.</span>
+      <div class="modal-btns">
+        <button class="btn" onclick="closeOfficeDetail()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- USER FORM MODAL -->
 <div class="modal-overlay" id="userform-overlay" onclick="if(event.target===this)closeUserForm()">
   <div class="modal" style="width:460px">
@@ -1833,10 +1850,11 @@ function buildOverview(d){
   (d.a_classificar||[]).forEach(r=>{ if(isCorr(key(r,'ac'))||taskFor(r)) return; const k=r.escritorio_atual||'Não informado'; counts[k]=(counts[k]||0)+1; });
   const rank = Object.entries(counts).map(([nome,total])=>({nome,total})).sort((a,b)=>b.total-a.total);
   const max = rank[0]?.total||1;
+  RANK_CURRENT = rank;
   const rankEl=document.getElementById('ov-rank');
   if(rank.length){
     rankEl.innerHTML = rank.slice(0,12).map((a,i)=>`
-      <div class="ar-row">
+      <div class="ar-row" style="cursor:pointer" onclick="openOfficeDetail(${i})">
         <span class="ar-n">${i+1}</span>
         <span class="ar-name" title="${a.nome}">${a.nome}</span>
         <div class="ar-bar"><div class="ar-fill" style="width:${Math.round(a.total/max*100)}%"></div></div>
@@ -1846,6 +1864,44 @@ function buildOverview(d){
     rankEl.innerHTML = `<div style="color:var(--t3);font-size:11px;padding:8px 0">Nenhuma pendência de escritório na base atual.</div>`;
   }
 }
+let RANK_CURRENT = [];
+function openOfficeDetail(idx){
+  const office = RANK_CURRENT[idx];
+  if(!office) return;
+  const nome = office.nome;
+
+  const escRows = (D.escritorio||[])
+    .filter(r=>(r.escritorio_atual||'Não informado')===nome && !isCorr(key(r,'esc')))
+    .map(r=>({panel:'escritorio', pasta:r.pasta, processo:r.processo, cat:'Escritórios', detail:`Analista atual "${r.analista_interno}" → deveria ser "${r.analista_esperado}"`}));
+
+  const acRows = (D.a_classificar||[])
+    .filter(r=>(r.escritorio_atual||'Não informado')===nome && !isCorr(key(r,'ac')) && !taskFor(r))
+    .map(r=>({pasta:r.pasta, processo:r.processo, detail:(r.campos||[]).join(', ')||'—'}));
+
+  document.getElementById('officedetail-title').textContent = nome;
+  document.getElementById('officedetail-desc').textContent = `${escRows.length.toLocaleString('pt-BR')} erro${escRows.length!==1?'s':''} de analista e ${acRows.length.toLocaleString('pt-BR')} caso${acRows.length!==1?'s':''} a classificar pendentes deste escritório.`;
+
+  const escSection = escRows.length ? `
+    <div style="margin:6px 0 4px;font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.04em">Erros de Analista (${escRows.length})</div>
+    <table class="mt"><thead><tr><th style="text-align:left">Categoria</th><th style="text-align:left">Pasta</th><th style="text-align:left">Processo</th><th style="text-align:left">O que está errado</th></tr></thead>
+    <tbody>${escRows.map(r=>`<tr style="cursor:pointer" onclick="closeOfficeDetail();go('${r.panel}')">
+      <td><span class="pill p-r">${r.cat}</span></td>
+      <td class="mo">${r.pasta}</td><td class="mo">${r.processo}</td>
+      <td style="color:var(--t2);font-size:11px">${r.detail}</td>
+    </tr>`).join('')}</tbody></table>` : '<div style="color:var(--t2);font-size:12px;margin:6px 0 14px">Nenhum erro de analista pendente neste escritório.</div>';
+
+  const acSection = acRows.length ? `
+    <div style="margin:14px 0 4px;font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:.04em">Casos a Classificar (${acRows.length}), não é erro</div>
+    <table class="mt"><thead><tr><th style="text-align:left">Pasta</th><th style="text-align:left">Processo</th><th style="text-align:left">Pendente</th></tr></thead>
+    <tbody>${acRows.map(r=>`<tr style="cursor:pointer" onclick="closeOfficeDetail();go('classificar')">
+      <td class="mo">${r.pasta}</td><td class="mo">${r.processo}</td>
+      <td style="color:var(--t2);font-size:11px">${r.detail}</td>
+    </tr>`).join('')}</tbody></table>` : '';
+
+  document.getElementById('officedetail-body').innerHTML = escSection + acSection;
+  document.getElementById('officedetail-overlay').classList.add('on');
+}
+function closeOfficeDetail(){ document.getElementById('officedetail-overlay').classList.remove('on'); }
 
 // ── ACOMPANHAMENTO (histórico entre importações) ──
 // Guardado no servidor, compartilhado entre usuários. A cada render(), se
