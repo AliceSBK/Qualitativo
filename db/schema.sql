@@ -54,29 +54,33 @@ CREATE TABLE IF NOT EXISTS task_state (
   incomplete_pastas JSONB NOT NULL DEFAULT '[]'
 );
 
--- Última causa raiz conhecida por pasta (fora de "A Classificar").
+-- Última causa raiz e produto conhecidos por pasta (fora de "A Classificar").
 CREATE TABLE IF NOT EXISTS causa_hist (
   pasta TEXT PRIMARY KEY,
   causa TEXT NOT NULL,
+  produto TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Alertas de mudança de causa raiz (append/upsert por pasta).
+-- Alertas de mudança de causa raiz e/ou produto (append/upsert por pasta).
 CREATE TABLE IF NOT EXISTS causa_alerts (
   pasta TEXT PRIMARY KEY,
   processo TEXT,
   causa_anterior TEXT,
   causa_atual TEXT,
+  produto_anterior TEXT,
+  produto_atual TEXT,
   detectado_em TEXT
 );
 
--- Assinaturas (pasta+causa) já verificadas, para não repetir o alerta.
+-- Assinaturas (pasta+causa+produto) já verificadas, para não repetir o alerta.
 CREATE TABLE IF NOT EXISTS causa_verified (
   pasta TEXT NOT NULL,
   causa TEXT NOT NULL,
+  produto TEXT NOT NULL DEFAULT '',
   verified_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   verified_by TEXT,
-  PRIMARY KEY (pasta, causa)
+  PRIMARY KEY (pasta, causa, produto)
 );
 
 -- Histórico de retratos (Acompanhamento), um por importação distinta.

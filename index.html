@@ -1101,14 +1101,14 @@ body.role-readonly .sel-bar{display:none!important}
   <!-- ══ MONITORAMENTO — MUDANÇA DE CAUSA RAIZ ══ -->
   <div class="panel" id="p-causaraiz">
     <div class="sh">
-      <h2>Mudança de Causa Raiz — Monitoramento e Controle</h2>
+      <h2>Mudança de Causa Raiz ou Produto: Monitoramento e Controle</h2>
       <div class="sh-r">
         <span class="cpill p-d" id="c-cr">—</span>
         <button class="btn hi admin-only" onclick="exportCat('causaraiz')">Exportar CSV</button>
       </div>
     </div>
     <div style="background:var(--blu2);border:1px solid rgba(27,111,168,.2);border-radius:var(--r2);padding:8px 12px;font-size:11px;color:var(--blue);margin-bottom:11px;line-height:1.5">
-      Não é uma pendência de erro de cadastro: é um alerta de controle sempre que a causa raiz (glossário) de uma pasta muda entre duas importações da base (ex.: era "Alegação de fraude" e passou a "Venda enganosa"). Casos em "A Classificar" não entram aqui. Revise e, se estiver correto, marque como <strong>verificado</strong> para sair da lista de pendências de monitoramento.
+      Não é uma pendência de erro de cadastro: é um alerta de controle sempre que a causa raiz (glossário) e/ou o produto de uma pasta mudam entre duas importações da base (ex.: causa raiz era "Alegação de fraude" e passou a "Venda enganosa"). Casos em "A Classificar" não entram aqui, em nenhum dos dois campos. Revise e, se estiver correto, marque como <strong>verificado</strong> para sair da lista de pendências de monitoramento.
     </div>
     <div class="tw">
       <div class="tbar">
@@ -1122,7 +1122,7 @@ body.role-readonly .sel-bar{display:none!important}
       <div style="overflow-x:auto">
         <table>
           <thead><tr>
-            <th>Pasta</th><th>Processo</th><th>Causa Raiz Anterior</th><th>Causa Raiz Atual</th><th>Detectado em</th><th>Status</th><th>Ação</th>
+            <th>Pasta</th><th>Processo</th><th>Causa Raiz Anterior</th><th>Causa Raiz Atual</th><th>Produto Anterior</th><th>Produto Atual</th><th>Detectado em</th><th>Status</th><th>Ação</th>
           </tr></thead>
           <tbody id="cr-body"></tbody>
         </table>
@@ -1227,20 +1227,20 @@ async function refreshCausaAlerts(){
 // já passa disso com dezenas de milhares de linhas.
 const CAUSA_DETECT_BATCH = 15000;
 async function detectCausaChanges(base){
-  const rows = base.map(r=>({pasta:r.nr_pasta, processo:r.nr_processo, causa:r.ds_causa_raiz}));
+  const rows = base.map(r=>({pasta:r.nr_pasta, processo:r.nr_processo, causa:r.ds_causa_raiz, produto:r.ds_produto}));
   for(let i=0; i<rows.length; i+=CAUSA_DETECT_BATCH){
     const chunk = rows.slice(i, i+CAUSA_DETECT_BATCH);
     await apiFetch('/api/causa', {method:'POST', body:JSON.stringify({action:'detect', rows:chunk})});
   }
   await refreshCausaAlerts();
 }
-async function verifyCausaAlert(pasta, causaAtual){
-  await apiFetch('/api/causa', {method:'POST', body:JSON.stringify({action:'verify', pasta, causa:causaAtual})});
+async function verifyCausaAlert(pasta, causaAtual, produtoAtual){
+  await apiFetch('/api/causa', {method:'POST', body:JSON.stringify({action:'verify', pasta, causa:causaAtual||'', produto:produtoAtual||''})});
   await refreshCausaAlerts();
   renderCausaAlerts();
 }
 function refreshCausaBadge(){
-  const pendentes=CAUSA_ALERTS.filter(a=>!CAUSA_VERIFIED.has(a.pasta+'|'+a.causa_atual)).length;
+  const pendentes=CAUSA_ALERTS.filter(a=>!CAUSA_VERIFIED.has(`${a.pasta}|${a.causa_atual||''}|${a.produto_atual||''}`)).length;
   const nb=document.getElementById('nb-cr'); if(nb) nb.textContent=pendentes.toLocaleString('pt-BR');
   const c=document.getElementById('c-cr'); if(c) c.textContent=pendentes.toLocaleString('pt-BR')+' pendentes';
 }
@@ -2508,7 +2508,7 @@ function exportCat(cat){
     mba:{data:D.mba_erros||[],hdr:'Pasta;Processo;Data;Escritório Atual;Motivo;Status',fn:r=>`"${r.pasta}";"${r.processo}";"${r.dt_entrada||''}";"MBA Advogados";"${r.motivo||''}";"${isCorr(key(r,'mba'))?'Corrigido':'Pendente'}"\n`},
     marco:{data:D.marco_erros||[],hdr:'Pasta;Processo;Data;Causa Raiz;Escritório Atual;Escritório Esperado;Status',fn:r=>`"${r.pasta}";"${r.processo}";"${r.dt_entrada||''}";"${r.causa_raiz||''}";"${r.escritorio_atual||''}";"Lima e Feigelson Advogados";"${isCorr(key(r,'mrc'))?'Corrigido':'Pendente'}"\n`},
     cleyton:{data:D.cleyton_erros||[],hdr:'Pasta;Processo;Data;Causa Raiz;Escritório Atual;Escritório Esperado;Responsável;Status',fn:r=>`"${r.pasta}";"${r.processo}";"${r.dt_entrada||''}";"${r.causa_raiz||''}";"${r.escritorio_atual||''}";"MBA Advogados";"Samuel Ribeiro da Silva";"${isCorr(key(r,'cly'))?'Corrigido':'Pendente'}"\n`},
-    causaraiz:{data:CAUSA_ALERTS,hdr:'Pasta;Processo;Causa Raiz Anterior;Causa Raiz Atual;Detectado em;Status',fn:r=>{ const v=CAUSA_VERIFIED.has(r.pasta+'|'+r.causa_atual); return `"${r.pasta}";"${r.processo}";"${r.causa_anterior}";"${r.causa_atual}";"${r.detectado_em}";"${v?'Verificado':'Pendente verificação'}"\n`; }},
+    causaraiz:{data:CAUSA_ALERTS,hdr:'Pasta;Processo;Causa Raiz Anterior;Causa Raiz Atual;Produto Anterior;Produto Atual;Detectado em;Status',fn:r=>{ const v=CAUSA_VERIFIED.has(`${r.pasta}|${r.causa_atual||''}|${r.produto_atual||''}`); return `"${r.pasta}";"${r.processo}";"${r.causa_anterior||''}";"${r.causa_atual||''}";"${r.produto_anterior||''}";"${r.produto_atual||''}";"${r.detectado_em}";"${v?'Verificado':'Pendente verificação'}"\n`; }},
         estrat200k:{data:D.estrategico_200k||[],hdr:'Pasta;Processo;Valor;Campo;Atual;Esperado',fn:r=>(r.erros||[]).map(e=>`"${r.pasta}";"${r.processo}";"${r.vl_causa}";"${e.campo}";"${e.atual}";"${e.esperado}"\n`).join('')},
   };
   const m=maps[cat]; if(!m) return;
@@ -2651,7 +2651,7 @@ function renderCausaAlerts(){
   const q=(document.getElementById('cr-q')||{value:''}).value.toLowerCase();
   const st=(document.getElementById('cr-status')||{value:''}).value;
   const verified=CAUSA_VERIFIED;
-  const all=CAUSA_ALERTS.map(a=>({...a, isVerified:verified.has(a.pasta+'|'+a.causa_atual)}));
+  const all=CAUSA_ALERTS.map(a=>({...a, isVerified:verified.has(`${a.pasta}|${a.causa_atual||''}|${a.produto_atual||''}`)}));
   const data=all.filter(a=>{
     if(q && !(a.pasta+a.processo).toLowerCase().includes(q)) return false;
     if(st==='pendente' && a.isVerified) return false;
@@ -2664,11 +2664,13 @@ function renderCausaAlerts(){
   document.getElementById('cr-body').innerHTML=sl.map(a=>{
     const statusHtml = a.isVerified ? '<span class="pill p-g">Verificado</span>' : '<span class="pill p-o">Pendente verificação</span>';
     const actionHtml = a.isVerified ? '<span style="color:var(--t3);font-size:10px">—</span>'
-      : `<button class="btn admin-only" style="padding:2px 8px;font-size:10px" onclick="verifyCausaAlert('${a.pasta}','${String(a.causa_atual).replace(/'/g,"\\'")}')">Marcar verificado</button>`;
+      : `<button class="btn admin-only" style="padding:2px 8px;font-size:10px" onclick="verifyCausaAlert('${a.pasta}','${String(a.causa_atual||'').replace(/'/g,"\\'")}','${String(a.produto_atual||'').replace(/'/g,"\\'")}')">Marcar verificado</button>`;
     return `<tr>
       <td class="mo">${a.pasta}</td><td class="mo">${a.processo}</td>
-      <td style="color:var(--t3)">${a.causa_anterior}</td>
-      <td style="color:var(--yellow)">${a.causa_atual}</td>
+      <td style="color:var(--t3)">${a.causa_anterior||'—'}</td>
+      <td style="color:${a.causa_atual?'var(--yellow)':'var(--t3)'}">${a.causa_atual||'—'}</td>
+      <td style="color:var(--t3)">${a.produto_anterior||'—'}</td>
+      <td style="color:${a.produto_atual?'var(--yellow)':'var(--t3)'}">${a.produto_atual||'—'}</td>
       <td style="color:var(--t2);font-size:10px">${a.detectado_em}</td>
       <td>${statusHtml}</td>
       <td>${actionHtml}</td>
