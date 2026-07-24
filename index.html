@@ -2415,6 +2415,7 @@ function importBase(inp){
         const produto=String(r.ds_produto||'').trim();
         const escritorio=String(r.nm_escritorio||'').trim();
         const advogado=String(r.nm_advogado_do_autor||'').trim();
+        const analistaProd=PROD_MAP[norm(r.nr_processo)]||'';
         const analistaEsc=ESC_ANALISTA_ESPERADO[escritorio];
         if(analistaEsc){
           const analistaAtual=String(r.nm_analista_interno||'').trim();
@@ -2427,13 +2428,13 @@ function importBase(inp){
         if(!produto || produto==='A classificar') campos.push('Produto');
         if(campos.length) newAC.push({pasta:r.nr_pasta, processo:r.nr_processo, dt_entrada:dtfmt(r.__dt), dt_mes:dtmes(r.__dt), analista_impl:'', campos, escritorio_atual:escritorio});
         if(causa==='Venda enganosa' && produto && produto!=='Cartão Consignado' && produto!=='A classificar'){
-          newVE.push({pasta:r.nr_pasta, processo:r.nr_processo, dt_entrada:dtfmt(r.__dt), dt_mes:dtmes(r.__dt), analista_impl:'', causa_raiz:causa, produto_atual:produto, produto_esperado:'Cartão Consignado'});
+          newVE.push({pasta:r.nr_pasta, processo:r.nr_processo, dt_entrada:dtfmt(r.__dt), dt_mes:dtmes(r.__dt), analista_impl:analistaProd, causa_raiz:causa, produto_atual:produto, produto_esperado:'Cartão Consignado'});
         }
         const orgaoAtualFull=String(r.ds_orgao||'').trim();
         const orgaoAtualCod=orgaoAtualFull.split(' - ')[0].trim();
         const orgaoEsp=orgaoEsperado(r.nr_processo, r.ds_estado);
         if(orgaoEsp && orgaoAtualCod && orgaoAtualCod!==orgaoEsp){
-          newOG.push({pasta:r.nr_pasta, processo:r.nr_processo, dt_entrada:dtfmt(r.__dt), dt_mes:dtmes(r.__dt), analista_impl:String(r.nm_analista_interno||'').trim(), orgao_atual:orgaoAtualFull, orgao_esperado:orgaoEsp});
+          newOG.push({pasta:r.nr_pasta, processo:r.nr_processo, dt_entrada:dtfmt(r.__dt), dt_mes:dtmes(r.__dt), analista_impl:analistaProd, orgao_atual:orgaoAtualFull, orgao_esperado:orgaoEsp});
         }
         // Casos do advogado Cleyton da Silva Barbosa a partir de 15/07/2026
         // são direcionados ao MBA Advogados de propósito (regra própria dele,
@@ -2485,17 +2486,30 @@ function importBase(inp){
   r.readAsBinaryString(f);
 }
 
-function importProd(inp){
+async function importProd(inp){
   const f=inp.files[0]; if(!f) return;
   const h=document.getElementById('hint-prod');
   h.className='up-hint'; h.textContent='Processando…';
   const r=new FileReader();
-  r.onload=e=>{
+  r.onload=async e=>{
     try{
       const wb=XLSX.read(e.target.result,{type:'binary'});
       const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
       PROD_MAP={};
       rows.forEach(r=>{ const p=norm(String(r.NUMERO_PROCESSO||r.nr_processo||'')); const a=String(r.ANALISTA||r.analista||'').trim(); if(p&&a) PROD_MAP[p]=a; });
+
+      // O analista pode ser importado antes ou depois da base de processos
+      // (a ordem não é fixa); por isso, sempre que a produtividade for
+      // (re)carregada, atualiza o campo analista_impl de quem já está
+      // pendente em Órgão e Venda Enganosa, em vez de depender de já ter
+      // sido calculado no momento da importação da base.
+      (D.orgao||[]).forEach(x=>{ x.analista_impl = PROD_MAP[norm(x.processo)]||''; });
+      (D.venda_enganosa||[]).forEach(x=>{ x.analista_impl = PROD_MAP[norm(x.processo)]||''; });
+      if((D.orgao&&D.orgao.length)||(D.venda_enganosa&&D.venda_enganosa.length)){
+        await apiFetch('/api/data', {method:'POST', body:JSON.stringify({data:D})});
+        render(D);
+      }
+
       h.className='up-hint ok'; h.textContent=`${f.name.slice(0,22)} · ${Object.keys(PROD_MAP).length.toLocaleString('pt-BR')} registros`;
     }catch(ex){ h.className='up-hint err'; h.textContent='Erro: '+ex.message; }
   };
