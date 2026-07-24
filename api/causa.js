@@ -53,6 +53,7 @@ module.exports = async function handler(req, res) {
         const hoje = new Date().toLocaleDateString('pt-BR');
 
         const alerts = [];
+        const staleClear = [];
         const pastasOut = [];
         const causasOut = [];
         for (const row of rows) {
@@ -60,8 +61,17 @@ module.exports = async function handler(req, res) {
           const causa = String(row.causa || '').trim();
           if (!pasta || !causa || causa === 'A classificar') continue;
           const prev = hist.get(pasta);
-          if (prev && prev !== 'A classificar' && prev !== causa && !verified.has(`${pasta}|${causa}`)) {
-            alerts.push({ pasta, processo: row.processo || null, causa_anterior: prev, causa_atual: causa, detectado_em: hoje });
+          const mudou = prev && prev !== 'A classificar' && prev !== causa;
+          if (mudou) {
+            if (!verified.has(`${pasta}|${causa}`)) {
+              alerts.push({ pasta, processo: row.processo || null, causa_anterior: prev, causa_atual: causa, detectado_em: hoje });
+            } else {
+              // Voltou pra um valor já verificado antes (ex.: A -> B, alerta
+              // pendente, depois volta de B -> A de novo): não há mais nada
+              // pendente pra essa pasta, então o alerta antigo (de A -> B)
+              // fica obsoleto e precisa sumir, não só deixar de ser criado.
+              staleClear.push(pasta);
+            }
           }
           pastasOut.push(pasta);
           causasOut.push(causa);
@@ -81,11 +91,14 @@ module.exports = async function handler(req, res) {
           await query(
             `INSERT INTO causa_alerts (pasta, processo, causa_anterior, causa_atual, detectado_em)
              VALUES ($1,$2,$3,$4,$5)
-             ON CONFLICT (pasta) DO UPDATE SET causa_atual=$4, processo=$2, detectado_em=$5`,
+             ON CONFLICT (pasta) DO UPDATE SET causa_anterior=$3, causa_atual=$4, processo=$2, detectado_em=$5`,
             [a.pasta, a.processo, a.causa_anterior, a.causa_atual, a.detectado_em]
           );
         }
-        return res.status(200).json({ ok: true, detected: alerts.length });
+        if (staleClear.length) {
+          await query('DELETE FROM causa_alerts WHERE pasta = ANY($1::text[])', [staleClear]);
+        }
+        return res.status(200).json({ ok: true, detected: alerts.length, cleared: staleClear.length });
       } catch (e) {
         return res.status(500).json({ error: 'Erro: ' + e.message });
       }
