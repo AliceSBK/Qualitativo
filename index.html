@@ -1269,6 +1269,49 @@ const PER=15;
 const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const fmtM = m => { if(!m) return ''; const [mm,yy]=m.split('/'); return MONTHS[+mm-1]+'/'+yy.slice(2); };
 const norm = p => String(p).trim().replace(/\s/g,'');
+// Devolve o controle pro navegador por um instante. Sem isso, processar a
+// base inteira (hoje 150 mil+ linhas) trava a aba por tempo suficiente pro
+// Chrome achar que a página travou e oferecer fechá-la.
+const yieldToUI = () => new Promise(res=>setTimeout(res,0));
+
+// XLSX.read()/sheet_to_json() são chamadas síncronas e pesadas: numa
+// planilha de 150 mil+ linhas, isso sozinho já trava a aba por dezenas de
+// segundos (o yieldToUI() não ajuda aqui, é uma única chamada, não um
+// loop). Roda num Web Worker pra não travar a thread principal; se o
+// worker falhar por qualquer motivo (navegador antigo, rede bloqueando o
+// importScripts do CDN), cai de volta pro parse síncrono de sempre.
+function parseXlsxOffThread(arrayBuffer, sheetOpts){
+  return new Promise((resolve, reject)=>{
+    let worker, url;
+    try{
+      const src = `self.importScripts('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+        self.onmessage = function(e){
+          try{
+            const wb = XLSX.read(e.data.buf, {type:'array'});
+            const result = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], e.data.opts);
+            self.postMessage({ok:true, result});
+          }catch(err){ self.postMessage({ok:false, error:String(err&&err.message||err)}); }
+        };`;
+      const blob = new Blob([src], {type:'application/javascript'});
+      url = URL.createObjectURL(blob);
+      worker = new Worker(url);
+    }catch(err){ reject(err); return; }
+    const cleanup = () => { try{worker.terminate();}catch(_){} try{URL.revokeObjectURL(url);}catch(_){} };
+    const timeout = setTimeout(()=>{ cleanup(); reject(new Error('Timeout no worker de leitura da planilha.')); }, 120000);
+    worker.onmessage = (e)=>{ clearTimeout(timeout); cleanup(); e.data.ok ? resolve(e.data.result) : reject(new Error(e.data.error)); };
+    worker.onerror = (err)=>{ clearTimeout(timeout); cleanup(); reject(err); };
+    worker.postMessage({buf:arrayBuffer, opts:sheetOpts});
+  });
+}
+async function parseXlsxSheet(arrayBuffer, sheetOpts){
+  try{
+    return await parseXlsxOffThread(arrayBuffer, sheetOpts);
+  }catch(err){
+    console.warn('Leitura em worker falhou, usando thread principal:', err.message);
+    const wb=XLSX.read(arrayBuffer,{type:'array'});
+    return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], sheetOpts);
+  }
+}
 
 // ── INIT ──────────────────────────────────────
 function init(){
@@ -2378,14 +2421,20 @@ function importBase(inp){
   const r=new FileReader();
   r.onload=async e=>{
     try{
-      const wb=XLSX.read(e.target.result,{type:'binary'});
-      const raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+      const raw=await parseXlsxSheet(e.target.result,{header:1,defval:''});
       const KNOWN=['nr_processo','ds_causa_raiz','nr_pasta','ds_situacao','ds_produto','dt_entrada'];
       let hi=-1;
       for(let i=0;i<Math.min(10,raw.length);i++){ if(raw[i].some(c=>KNOWN.includes(String(c).trim()))){ hi=i; break; } }
       if(hi<0){ h.className='up-hint err'; h.textContent='Formato não reconhecido'; return; }
       const hdrs=raw[hi].map(c=>String(c).trim());
-      const rows=raw.slice(hi+1).map(r=>{ const o={}; hdrs.forEach((hh,i)=>{o[hh]=r[i];}); return o; }).filter(r=>r.nr_processo||r.Processo);
+      const rawRows=raw.slice(hi+1);
+      const CHUNK=5000;
+      const rows=[];
+      for(let i=0;i<rawRows.length;i++){
+        const rr=rawRows[i]; const o={}; hdrs.forEach((hh,j)=>{o[hh]=rr[j];});
+        if(o.nr_processo||o.Processo) rows.push(o);
+        if(i%CHUNK===0){ h.textContent=`Processando… (lendo ${i.toLocaleString('pt-BR')}/${rawRows.length.toLocaleString('pt-BR')})`; await yieldToUI(); }
+      }
 
       function parseDate(v){
         if(v instanceof Date) return isNaN(v)?null:v;
@@ -2397,20 +2446,23 @@ function importBase(inp){
       const dtmes = d => String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
 
       const dedup=new Map();
-      rows.forEach(r=>{
+      for(let i=0;i<rows.length;i++){
+        const r=rows[i];
         const dt=parseDate(r.dt_entrada);
         const sit=String(r.ds_situacao||'').toLowerCase();
         const pasta=String(r.nr_pasta||'');
         if(sit.includes('andamento') && dt && dt.getFullYear()===2026 && pasta.toUpperCase().includes('CIVE') && !dedup.has(pasta)){
           dedup.set(pasta, {...r, __dt:dt});
         }
-      });
+        if(i%CHUNK===0){ h.textContent=`Processando… (filtrando ${i.toLocaleString('pt-BR')}/${rows.length.toLocaleString('pt-BR')})`; await yieldToUI(); }
+      }
       const base=[...dedup.values()];
       if(!base.length){ h.className='up-hint err'; h.textContent='Nenhum processo Em Andamento de 2026 (CIVE) encontrado'; return; }
 
       const cutoffMba=new Date(2026,6,4), cutoffMarco=new Date(2026,6,4), cutoffCley=new Date(2026,6,15);
       const newAC=[], newVE=[], newMBA=[], newMarco=[], newCley=[], newOG=[], newESC=[];
-      base.forEach(r=>{
+      for(let bi=0;bi<base.length;bi++){
+        const r=base[bi];
         const causa=String(r.ds_causa_raiz||'').trim();
         const produto=String(r.ds_produto||'').trim();
         const escritorio=String(r.nm_escritorio||'').trim();
@@ -2450,7 +2502,8 @@ function importBase(inp){
         if(advogado==='CLEYTON DA SILVA BARBOSA' && r.__dt>=cutoffCley && escritorio!=='MBA Advogados'){
           newCley.push({pasta:r.nr_pasta, processo:r.nr_processo, dt_entrada:dtfmt(r.__dt), dt_mes:dtmes(r.__dt), causa_raiz:causa, escritorio_atual:escritorio});
         }
-      });
+        if(bi%CHUNK===0){ h.textContent=`Processando… (classificando ${bi.toLocaleString('pt-BR')}/${base.length.toLocaleString('pt-BR')})`; await yieldToUI(); }
+      }
 
       const resolvidosKeys = [
         ...autoMarkResolved('ac',D.a_classificar,newAC),
@@ -2483,7 +2536,7 @@ function importBase(inp){
       render(D);
     }catch(ex){ h.className='up-hint err'; h.textContent='Erro: '+ex.message; }
   };
-  r.readAsBinaryString(f);
+  r.readAsArrayBuffer(f);
 }
 
 async function importProd(inp){
@@ -2493,10 +2546,14 @@ async function importProd(inp){
   const r=new FileReader();
   r.onload=async e=>{
     try{
-      const wb=XLSX.read(e.target.result,{type:'binary'});
-      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      const rows=await parseXlsxSheet(e.target.result,{defval:''});
       PROD_MAP={};
-      rows.forEach(r=>{ const p=norm(String(r.NUMERO_PROCESSO||r.nr_processo||'')); const a=String(r.ANALISTA||r.analista||'').trim(); if(p&&a) PROD_MAP[p]=a; });
+      for(let i=0;i<rows.length;i++){
+        const row=rows[i];
+        const p=norm(String(row.NUMERO_PROCESSO||row.nr_processo||'')); const a=String(row.ANALISTA||row.analista||'').trim();
+        if(p&&a) PROD_MAP[p]=a;
+        if(i%5000===0){ h.textContent=`Processando… (${i.toLocaleString('pt-BR')}/${rows.length.toLocaleString('pt-BR')})`; await yieldToUI(); }
+      }
 
       // O analista pode ser importado antes ou depois da base de processos
       // (a ordem não é fixa); por isso, sempre que a produtividade for
@@ -2513,7 +2570,7 @@ async function importProd(inp){
       h.className='up-hint ok'; h.textContent=`${f.name.slice(0,22)} · ${Object.keys(PROD_MAP).length.toLocaleString('pt-BR')} registros`;
     }catch(ex){ h.className='up-hint err'; h.textContent='Erro: '+ex.message; }
   };
-  r.readAsBinaryString(f);
+  r.readAsArrayBuffer(f);
 }
 
 // Base de tarefas ("Minhas tarefas"): espelha só as tarefas "Complementar
